@@ -1,0 +1,63 @@
+<div class="dash">
+  <div class="page-head">
+    <div>
+      <h2>Dashboard</h2>
+    </div>
+    <div class="actions">
+      <button class="btn" (click)="load()">Actualizar</button>
+    </div>
+  </div>
+
+  <div class="error" *ngIf="error">{{ error }}</div>
+  <div class="muted" *ngIf="loading">Cargando…</div>
+
+  <div class="dash-grid" *ngIf="!loading">
+    <div class="card">
+      <div class="section-head">
+        <div class="section-title">KPIs</div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi" *ngIf="canSeeProveedores()">
+          <div class="kpi-value">{{ kpis.proveedores }}</div>
+          <div class="kpi-label">Proveedores</div>
+        </div>
+        <div class="kpi" *ngIf="canSeeAlmacenes()">
+          <div class="kpi-value">{{ kpis.almacenes }}</div>
+          <div class="kpi-label">Almacenes</div>
+        </div>
+        <div class="kpi" *ngIf="canSeeRequerimientos()">
+          <div class="kpi-value">{{ kpis.requerimientos }}</div>
+          <div class="kpi-label">Requerimientos</div>
+        </div>
+        <div class="kpi" *ngIf="canSeeCompras()">
+          <div class="kpi-value">{{ kpis.compras }}</div>
+          <div class="kpi-label">Compras</div>
+        </div>
+        <div class="kpi" *ngIf="canSeeLogisticaInterna()">
+          <div class="kpi-value">{{ kpis.atenciones }}</div>
+          <div class="kpi-label">Logística interna</div>
+        </div>
+        <div class="kpi" *ngIf="canSeeUsuarios()">
+          <div class="kpi-value">{{ kpis.usuarios }}</div>
+          <div class="kpi-label">Usuarios</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-head">
+        <div class="section-title">Accesos rápidos</div>
+      </div>
+
+      <div class="quick">
+        <a class="tile" routerLink="/requerimientos" *ngIf="canSeeRequerimientos()">Requerimientos</a>
+        <a class="tile" routerLink="/compras" *ngIf="canSeeCompras()">Compras</a>
+        <a class="tile" routerLink="/logistica-interna" *ngIf="canSeeLogisticaInterna()">Logística interna</a>
+        <a class="tile" routerLink="/proveedores" *ngIf="canSeeProveedores()">Proveedores</a>
+        <a class="tile" routerLink="/almacenes" *ngIf="canSeeAlmacenes()">Almacenes</a>
+        <a class="tile" routerLink="/usuarios" *ngIf="canSeeUsuarios()">Usuarios</a>
+      </div>
+    </div>
+  </div>
+</div>

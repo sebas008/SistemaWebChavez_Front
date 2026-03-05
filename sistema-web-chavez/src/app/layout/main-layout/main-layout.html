@@ -1,0 +1,13 @@
+<div class="layout">
+  <app-toasts></app-toasts>
+  <div class="backdrop" *ngIf="sidebarOpen" (click)="closeSidebar()"></div>
+
+  <app-sidebar class="sidebar" [class.open]="sidebarOpen" (navigate)="closeSidebar()"></app-sidebar>
+
+  <div class="content">
+    <app-navbar (toggleSidebar)="toggleSidebar()"></app-navbar>
+    <main class="page">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

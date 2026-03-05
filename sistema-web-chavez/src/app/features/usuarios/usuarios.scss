@@ -1,0 +1,24 @@
+@import '../proveedor/proveedor.scss';
+
+/* Usuarios page tweaks (keeps same visual language as Almacenes/Proveedores) */
+
+/* Make action links look consistent */
+.actions .link{
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+/* Roles modal list spacing */
+.roles-list{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  margin-top: 8px;
+}
+
+@media (min-width: 721px){
+  .roles-list{
+    max-width: 420px;
+  }
+}

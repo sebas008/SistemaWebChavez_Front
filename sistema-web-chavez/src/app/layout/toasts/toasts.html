@@ -1,0 +1,14 @@
+<div class="toast-host">
+  <div
+    class="toast"
+    *ngFor="let t of notify.toasts()"
+    [class.success]="t.type === 'success'"
+    [class.error]="t.type === 'error'"
+    [class.info]="t.type === 'info'"
+    (click)="dismiss(t.id)"
+    role="status"
+    aria-live="polite"
+  >
+    {{ t.message }}
+  </div>
+</div>

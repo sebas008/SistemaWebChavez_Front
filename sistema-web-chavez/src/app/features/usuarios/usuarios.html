@@ -1,0 +1,121 @@
+<div class="page-head">
+  <div>
+    <h2>Usuarios</h2>
+  </div>
+  <div class="actions">
+    <button class="btn" (click)="load()">Actualizar</button>
+    <button class="btn primary" (click)="openNew()">Nuevo</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="error" *ngIf="error">{{ error }}</div>
+  <div class="muted" *ngIf="loading">Cargando…</div>
+  <div class="table-wrap">
+  <table *ngIf="!loading">
+    <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Nombres</th>
+        <th>Email</th>
+        <th>Estado</th>
+        <th class="right">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of rows">
+        <td>{{ r.usuarioLogin }}</td>
+        <td>{{ r.nombres }}</td>
+        <td>{{ r.email || '-' }}</td>
+        <td>
+          <span class="pill" [class.ok]="r.activo" [class.bad]="!r.activo">{{ r.activo ? 'Activo' : 'Inactivo' }}</span>
+        </td>
+        <td class="right">
+          <button class="link" (click)="openEdit(r)">Editar</button>
+          <button class="link" (click)="openRoles(r)">Roles</button>
+        </td>
+      </tr>
+      <tr *ngIf="rows.length === 0">
+        <td colspan="5" class="muted">Sin registros.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</div>
+
+<!-- Modal: Crear/Editar -->
+<div class="modal" *ngIf="modalOpen">
+  <div class="modal-backdrop" (click)="closeModal()"></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="title">{{ editing ? 'Editar usuario' : 'Nuevo usuario' }}</div>
+      <button class="icon" (click)="closeModal()">✕</button>
+    </div>
+
+    <div class="grid">
+      <label *ngIf="!editing">
+        Usuario login
+        <input [(ngModel)]="form.usuarioLogin" placeholder="usuario" />
+      </label>
+
+      <label>
+        Nombres
+        <input [(ngModel)]="form.nombres" placeholder="Nombre completo" />
+      </label>
+
+      <label>
+        Email
+        <input type="email" [(ngModel)]="form.email" placeholder="correo@dominio.com" [ngModelOptions]="{standalone:true}" />
+      </label>
+
+      <label *ngIf="!editing">
+        Contraseña
+        <input type="password" [(ngModel)]="form.password" placeholder="******" [ngModelOptions]="{standalone:true}" />
+      </label>
+
+      <label *ngIf="editing">
+        Estado
+        <select [(ngModel)]="form.activo">
+          <option [ngValue]="true">Activo</option>
+          <option [ngValue]="false">Inactivo</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" (click)="closeModal()">Cancelar</button>
+      <button class="btn primary" (click)="save()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Roles -->
+<div class="modal" *ngIf="rolesOpen">
+  <div class="modal-backdrop" (click)="closeRoles()"></div>
+  <div class="modal-card small">
+    <div class="modal-head">
+      <div class="title">Asignar roles</div>
+      <button class="icon" (click)="closeRoles()">✕</button>
+    </div>
+
+    <div class="muted" style="margin-bottom: 10px;">Selecciona roles para: <b>{{ rolesUser?.usuarioLogin }}</b></div>
+
+    <label class="check">
+      <input type="checkbox" [(ngModel)]="roles.MASTER" [ngModelOptions]="{standalone:true}" />
+      <span>Master</span>
+    </label>
+    <label class="check">
+      <input type="checkbox" [(ngModel)]="roles.LOGISTICA" [ngModelOptions]="{standalone:true}" />
+      <span>Logística</span>
+    </label>
+    <label class="check">
+      <input type="checkbox" [(ngModel)]="roles.OBRAS" [ngModelOptions]="{standalone:true}" />
+      <span>Obras</span>
+    </label>
+
+    <div class="modal-actions">
+      <button class="btn" (click)="closeRoles()">Cancelar</button>
+      <button class="btn primary" (click)="saveRoles()">Guardar</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,153 @@
+<div class="page-head">
+  <div>
+    <h2>Logística interna</h2>
+  </div>
+  <div class="actions">
+    <button class="btn" (click)="load()">Actualizar</button>
+    <button class="btn primary" (click)="openNew()">Nuevo</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="error" *ngIf="error">{{ error }}</div>
+  <div class="muted" *ngIf="loading">Cargando…</div>
+  <div class="table-wrap">
+  <table *ngIf="!loading">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Obra</th>
+        <th>Origen</th>
+        <th>Destino</th>
+        <th>Fecha</th>
+        <th>Método</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of rows">
+        <td><b>{{ r.codigo }}</b></td>
+        <td>{{ obraNombre(r.idObra) }}</td>
+        <td>{{ almNombre(r.idAlmacenOrigen) }}</td>
+        <td>{{ almNombre(r.idAlmacenDestino) }}</td>
+        <td>{{ r.fecha | date : 'yyyy-MM-dd' }}</td>
+        <td>{{ r.metodoAtencion }}</td>
+        <td><span class="pill">{{ r.estado }}</span></td>
+      </tr>
+      <tr *ngIf="rows.length === 0">
+        <td colspan="7" class="muted">Sin registros.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</div>
+
+<!-- Modal: Nueva Atención -->
+<div class="modal" *ngIf="modalOpen">
+  <div class="modal-backdrop" (click)="closeModal()"></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="title">Registrar atención</div>
+      <button class="icon" (click)="closeModal()">✕</button>
+    </div>
+
+    <div class="grid">
+      <label>
+        Obra
+        <select [(ngModel)]="form.idObra">
+          <option *ngFor="let o of obras" [ngValue]="o.idObra">{{ o.nombre }}</option>
+        </select>
+      </label>
+      <label>
+        Método
+        <select [(ngModel)]="form.metodoAtencion">
+          <option value="DIRECTO">Directo</option>
+          <option value="COMPRA">Compra</option>
+        </select>
+      </label>
+      <label>
+        Almacén origen (Interno)
+        <select [(ngModel)]="form.idAlmacenOrigen">
+          <option *ngFor="let a of almacenesInternos" [ngValue]="a.idAlmacen">{{ a.nombre }}</option>
+        </select>
+      </label>
+      <label>
+        Almacén destino (Obra)
+        <select [(ngModel)]="form.idAlmacenDestino">
+          <option *ngFor="let a of almacenesObra" [ngValue]="a.idAlmacen">{{ a.nombre }}</option>
+        </select>
+      </label>
+      <label class="span2">
+        Observación
+        <input [(ngModel)]="form.observacion" placeholder="Opcional" />
+      </label>
+    </div>
+
+    <div class="subhead">
+      <div class="sub-title">Detalle</div>
+      <button class="btn" (click)="addRow()">+ Ítem</button>
+    </div>
+
+    <div class="table-wrap">
+    <table class="mini-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th style="width: 140px;">Cantidad</th>
+          <th>Obs.</th>
+          <th style="width: 120px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let d of form.detalle; let i = index">
+          <td>
+            <select [(ngModel)]="d.idItem">
+              <option *ngFor="let it of items" [ngValue]="it.idItem">{{ it.descripcion }}</option>
+            </select>
+          </td>
+          <td><input type="number" min="0" step="0.01" [(ngModel)]="d.cantidad" /></td>
+          <td><input [(ngModel)]="d.observacion" placeholder="Opcional" /></td>
+          <td class="right"><button class="link" (click)="removeRow(i)">Quitar</button></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" (click)="closeModal()">Cancelar</button>
+      <button class="btn primary" (click)="save()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal: Cambiar Estado -->
+<div class="modal" *ngIf="estadoOpen">
+  <div class="modal-backdrop" (click)="closeEstado()"></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="title">Cambiar estado</div>
+      <button class="icon" (click)="closeEstado()">✕</button>
+    </div>
+
+    <div class="grid">
+      <label class="span2">
+        Atención
+        <div><b>{{ estadoTarget?.codigo }}</b></div>
+        <div class="muted">Estado actual: {{ estadoTarget?.estado }}</div>
+      </label>
+
+      <label class="span2">
+        Nuevo estado
+        <select [(ngModel)]="nuevoEstado">
+          <option *ngFor="let e of estados" [ngValue]="e">{{ e }}</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" (click)="closeEstado()">Cancelar</button>
+      <button class="btn primary" (click)="guardarEstado()">Guardar</button>
+    </div>
+  </div>
+</div>

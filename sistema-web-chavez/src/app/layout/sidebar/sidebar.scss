@@ -1,0 +1,29 @@
+.brand{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  padding: 18px 16px;
+  cursor:pointer;
+}
+.logo{ width: 40px; height: 40px; object-fit:contain; }
+.brand-text .title{ font-weight:700; letter-spacing:.2px; }
+.brand-text .subtitle{ font-size:12px; color:#6D6D6D; letter-spacing:2px; text-transform:uppercase; }
+
+.menu{ padding: 6px 10px 14px; display:flex; flex-direction:column; gap:4px; }
+.menu a{
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-decoration:none;
+  color:#2B2B2B;
+  font-weight: 600;
+}
+.menu a:hover{ background: rgba(140,90,60,.08); }
+.menu a.active{ background: rgba(140,90,60,.14); color:#8C5A3C; }
+.section{
+  margin-top: 10px;
+  padding: 10px 12px 6px;
+  color:#6D6D6D;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}

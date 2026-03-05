@@ -1,0 +1,10 @@
+<header class="topbar">
+  <button class="icon" (click)="onToggleSidebar()" aria-label="Menú">☰</button>
+
+  <div class="spacer"></div>
+
+  <div class="user" *ngIf="usuario as u">
+    <div class="name">{{ u.nombres || u.usuarioLogin }}</div>
+    <button class="btn" (click)="logout()">Salir</button>
+  </div>
+</header>

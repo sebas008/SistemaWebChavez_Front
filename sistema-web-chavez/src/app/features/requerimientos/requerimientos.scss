@@ -1,0 +1,6 @@
+@import '../usuarios/usuarios.scss';
+
+/* Requerimientos specific */
+.subhead{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.sub-title{font-weight:950;}
+.mini-table th,.mini-table td{ padding: 8px; }

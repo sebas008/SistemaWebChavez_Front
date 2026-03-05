@@ -1,0 +1,31 @@
+<div class="brand" (click)="onNavigate()" routerLink="/dashboard">
+  <img class="logo" src="/assets/logo.png" alt="A. Chavez" />
+  <div class="brand-text">
+    <div class="title">A. Chavez</div>
+    <div class="subtitle">Constructores</div>
+  </div>
+</div>
+
+<nav class="menu">
+  <a routerLink="/dashboard" routerLinkActive="active" (click)="onNavigate()">Dashboard</a>
+
+  <div class="section" *ngIf="canSeeProveedores() || canSeeAlmacenes()">Maestros</div>
+  <a *ngIf="canSeeProveedores()" routerLink="/proveedores" routerLinkActive="active" (click)="onNavigate()">
+    Proveedores
+  </a>
+  <a *ngIf="canSeeAlmacenes()" routerLink="/almacenes" routerLinkActive="active" (click)="onNavigate()">
+    Almacenes
+  </a>
+
+  <div class="section" *ngIf="canSeeUsuarios()">Seguridad</div>
+  <a *ngIf="canSeeUsuarios()" routerLink="/usuarios" routerLinkActive="active" (click)="onNavigate()">
+    Usuarios
+  </a>
+
+  <div class="section">Logística</div>
+  <a routerLink="/requerimientos" routerLinkActive="active" (click)="onNavigate()">Requerimientos</a>
+  <a *ngIf="canSeeCompras()" routerLink="/compras" routerLinkActive="active" (click)="onNavigate()">Compras</a>
+  <a *ngIf="canSeeLogisticaInterna()" routerLink="/logistica-interna" routerLinkActive="active" (click)="onNavigate()">
+    Logística interna
+  </a>
+</nav>
