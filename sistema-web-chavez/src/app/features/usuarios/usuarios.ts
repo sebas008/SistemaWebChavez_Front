@@ -43,6 +43,7 @@ export class Usuarios implements OnInit {
     MASTER: false,
     LOGISTICA: false,
     OBRAS: false,
+    OFICINA_TECNICA: false,
   };
 
   constructor(private cdr: ChangeDetectorRef,private api: ApiService, private notify: NotifyService) {}
@@ -154,7 +155,7 @@ this.error = e?.message || 'No se pudo cargar.';
 
   openRoles(row: UsuarioDto) {
     this.rolesUser = row;
-    this.roles = { MASTER: false, LOGISTICA: false, OBRAS: false };
+    this.roles = { MASTER: false, LOGISTICA: false, OBRAS: false, OFICINA_TECNICA: false };
     this.rolesOpen = true;
 
     // GET roles del usuario (API: /api/seguridad/usuarios/{id}/roles)
@@ -164,6 +165,7 @@ this.error = e?.message || 'No se pudo cargar.';
         this.roles.MASTER = set.has('MASTER');
         this.roles.LOGISTICA = set.has('LOGISTICA');
         this.roles.OBRAS = set.has('OBRAS');
+        this.roles.OFICINA_TECNICA = set.has('OFICINA_TECNICA');
         this.forceRender();
       },
       error: () => {
@@ -184,6 +186,7 @@ this.error = e?.message || 'No se pudo cargar.';
     if (this.roles.MASTER) roles.push('MASTER');
     if (this.roles.LOGISTICA) roles.push('LOGISTICA');
     if (this.roles.OBRAS) roles.push('OBRAS');
+    if (this.roles.OFICINA_TECNICA) roles.push('OFICINA_TECNICA');
 
     this.api.post<any>(`/seguridad/usuarios/${this.rolesUser.idUsuario}/roles`, { roles }).subscribe({
       next: () => {

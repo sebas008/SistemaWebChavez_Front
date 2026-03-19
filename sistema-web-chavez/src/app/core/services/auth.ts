@@ -62,6 +62,7 @@ export class AuthService {
       MASTER: ['MASTER', 'ADMIN', 'ADMINISTRADOR'],
       LOGISTICA: ['LOGISTICA', 'LOGÍSTICA'],
       OBRAS: ['OBRAS'],
+      OFICINA_TECNICA: ['OFICINA_TECNICA', 'OFICINA TÉCNICA', 'OFICINA TECNICA'],
     };
 
     const candidates = aliases[wanted] ?? [wanted];

@@ -1,6 +1,42 @@
 @import '../usuarios/usuarios.scss';
 
-/* Requerimientos specific */
 .subhead{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
 .sub-title{font-weight:950;}
 .mini-table th,.mini-table td{ padding: 8px; }
+
+.requerimiento-modal-card {
+  width: min(1120px, calc(100vw - 40px));
+}
+
+.form-header-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.requerimiento-detail-wrap {
+  overflow-x: auto;
+}
+
+.requerimiento-detail-table {
+  min-width: 980px;
+}
+
+.requerimiento-detail-table th,
+.requerimiento-detail-table td {
+  vertical-align: middle;
+}
+
+.requerimiento-detail-table select,
+.requerimiento-detail-table input {
+  width: 100%;
+}
+
+.form-note {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .form-header-grid {
+    grid-template-columns: 1fr;
+  }
+}

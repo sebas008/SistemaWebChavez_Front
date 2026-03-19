@@ -1,0 +1,40 @@
+<div class="page-head">
+  <div><h2>Materiales</h2></div>
+  <div class="actions">
+    <button class="btn" (click)="loadAll()">Actualizar</button>
+    <button class="btn primary" *ngIf="canEditMateriales()" (click)="openNew()">Nuevo</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="error" *ngIf="error">{{ error }}</div>
+  <div class="muted" *ngIf="loading">Cargando…</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Partida</th><th>Descripción</th><th>Unidad</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        <tr *ngFor="let r of rows">
+          <td>{{ r.partida || '-' }}</td>
+          <td class="strong">{{ r.descripcion }}</td>
+          <td>{{ unidadNombre(r.idUnidadMedida) }}</td>
+          <td><span class="pill" [class.off]="!r.activo">{{ r.activo ? 'Activo' : 'Inactivo' }}</span></td>
+          <td class="right"><button class="link" *ngIf="canEditMateriales()" (click)="openEdit(r)">Editar</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal" *ngIf="modalOpen">
+  <div class="modal-backdrop" (click)="closeModal()"></div>
+  <div class="modal-card">
+    <div class="modal-head"><div class="title">{{ editing ? 'Editar material' : 'Nuevo material' }}</div><button class="icon" (click)="closeModal()">✕</button></div>
+    <div class="grid">
+      <label>Partida<input [(ngModel)]="form.partida" /></label>
+      <label>Unidad de medida<select [(ngModel)]="form.idUnidadMedida"><option [ngValue]="null">-- Seleccionar --</option><option *ngFor="let u of unidades" [ngValue]="u.idUnidadMedida">{{ u.codigo }} - {{ u.nombre }}</option></select></label>
+      <label class="span2">Descripción<input [(ngModel)]="form.descripcion" /></label>
+      <label class="span2" *ngIf="editing">Activo<select [(ngModel)]="form.activo"><option [ngValue]="true">Sí</option><option [ngValue]="false">No</option></select></label>
+    </div>
+    <div class="modal-actions"><button class="btn" (click)="closeModal()">Cancelar</button><button class="btn primary" *ngIf="canEditMateriales()" (click)="save()">Guardar</button></div>
+  </div>
+</div>

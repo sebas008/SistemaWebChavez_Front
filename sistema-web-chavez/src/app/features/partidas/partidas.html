@@ -1,6 +1,6 @@
 <div class="page-head">
   <div>
-    <h2>Proveedores</h2>
+    <h2>Partidas</h2>
   </div>
   <div class="actions">
     <button class="btn" (click)="load()">Actualizar</button>
@@ -16,64 +16,38 @@
     <table>
       <thead>
         <tr>
-          <th>RUC</th>
-          <th>Razón social / Nombre comercial</th>
-          <th>Email</th>
-          <th>Teléfono</th>
+          <th>Nombre</th>
           <th>Estado</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let r of rows">
-          <td>{{ r.ruc || '-' }}</td>
-          <td class="strong">{{ r.razonSocial }}</td>
-          <td>{{ r.email || '-' }}</td>
-          <td>{{ r.telefono || '-' }}</td>
-          <td>
-            <span class="pill" [class.off]="!r.activo">{{ r.activo ? 'Activo' : 'Inactivo' }}</span>
-          </td>
-          <td class="right">
-            <button class="link" (click)="openEdit(r)">Editar</button>
-          </td>
+          <td class="strong">{{ r.nombre }}</td>
+          <td><span class="pill" [class.off]="!r.activo">{{ r.activo ? 'Activo' : 'Inactivo' }}</span></td>
+          <td class="right"><button class="link" (click)="openEdit(r)">Editar</button></td>
         </tr>
+        <tr *ngIf="!loading && rows.length === 0"><td colspan="3" class="muted">Sin registros.</td></tr>
       </tbody>
     </table>
   </div>
 </div>
 
-<!-- MODAL -->
 <div class="modal" *ngIf="modalOpen">
   <div class="modal-backdrop" (click)="closeModal()"></div>
   <div class="modal-card">
     <div class="modal-head">
-      <div class="title">{{ editing ? 'Editar proveedor' : 'Nuevo proveedor' }}</div>
+      <div class="title">{{ editing ? 'Editar partida' : 'Nueva partida' }}</div>
       <button class="icon" (click)="closeModal()">✕</button>
     </div>
 
     <div class="grid">
-      <label>
-        RUC
-        <input [(ngModel)]="form.ruc" onlyDigits inputmode="numeric" pattern="\d*" maxlength="11" placeholder="RUC (11 dígitos)" />
-      </label>
-
       <label class="span2">
-        Razón social / Nombre comercial
-        <input [(ngModel)]="form.razonSocial" onlyLetters />
+        Nombre
+        <input [(ngModel)]="form.nombre" placeholder="Nombre de la partida" />
       </label>
-
-      <label>
-        Email
-        <input [(ngModel)]="form.email" type="email" placeholder="correo@dominio.com" />
-      </label>
-
-      <label>
-        Teléfono
-        <input [(ngModel)]="form.telefono" onlyDigits inputmode="tel" pattern="[0-9+\s-]*" placeholder="Teléfono" />
-      </label>
-
       <label class="span2" *ngIf="editing">
-        <span>Activo</span>
+        Activo
         <select [(ngModel)]="form.activo">
           <option [ngValue]="true">Sí</option>
           <option [ngValue]="false">No</option>

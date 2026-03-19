@@ -29,11 +29,11 @@
           <td><span class="pill">{{ r.tipo }}</span></td>
           <td class="strong">{{ r.codigo }}</td>
           <td>{{ r.nombre }}</td>
+          <td>{{ obtenerNombreObra(r.idObra) }}</td>
           <td>
-            {{ (r.idObra ? (obras.find(o => o.idObra === r.idObra)?.nombre || ('#' + r.idObra)) : '-') }}
-          </td>
-          <td>
-            <span class="pill" [class.off]="!r.activo">{{ r.activo ? 'Activo' : 'Inactivo' }}</span>
+            <span class="pill" [class.off]="!r.activo">
+              {{ r.activo ? 'Activo' : 'Inactivo' }}
+            </span>
           </td>
           <td class="right">
             <button class="link" (click)="openEdit(r)">Editar</button>
@@ -44,7 +44,6 @@
   </div>
 </div>
 
-<!-- MODAL -->
 <div class="modal" *ngIf="modalOpen">
   <div class="modal-backdrop" (click)="closeModal()"></div>
   <div class="modal-card">
@@ -71,7 +70,9 @@
         Obra
         <select [(ngModel)]="form.idObra">
           <option [ngValue]="null">-- Seleccionar --</option>
-          <option *ngFor="let o of obras" [ngValue]="o.idObra">{{ o.codigo }} - {{ o.nombre }}</option>
+          <option *ngFor="let o of obras" [ngValue]="o.idObra">
+            {{ o.codigo }} - {{ o.nombre }}
+          </option>
         </select>
       </label>
 

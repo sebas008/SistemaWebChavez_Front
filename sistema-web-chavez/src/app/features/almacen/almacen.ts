@@ -1,4 +1,4 @@
-import {Component, OnInit, ChangeDetectorRef} from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgFor, NgIf } from '@angular/common';
 import { ApiService } from '../../core/services/api';
@@ -45,12 +45,15 @@ export class Almacen implements OnInit {
     activo: true,
   };
 
-  constructor(private cdr: ChangeDetectorRef,private api: ApiService, private notify: NotifyService) {}
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private api: ApiService,
+    private notify: NotifyService
+  ) {}
 
   ngOnInit(): void {
     this.loadAll();
   }
-
 
   loadAll() {
     this.loadObras();
@@ -67,24 +70,38 @@ export class Almacen implements OnInit {
   load() {
     this.loading = true;
     this.error = null;
+
     this.api.get<AlmacenDto[]>('/inventario/almacenes').subscribe({
       next: (data) => {
         this.rows = data || [];
         this.loading = false;
-              this.forceRender();
-},
+        this.forceRender();
+      },
       error: (e) => {
         this.loading = false;
-                this.forceRender();
-this.error = e?.message || 'No se pudo cargar.';
+        this.forceRender();
+        this.error = e?.message || 'No se pudo cargar.';
         this.notify.error(this.error);
       },
     });
   }
 
+  obtenerNombreObra(idObra: number | null | undefined): string {
+    if (!idObra) return '-';
+
+    const obra = this.obras.find((o) => o.idObra === idObra);
+    return obra?.nombre || `#${idObra}`;
+  }
+
   openNew() {
     this.editing = null;
-    this.form = { tipo: 'INTERNO', idObra: null, codigo: '', nombre: '', activo: true };
+    this.form = {
+      tipo: 'INTERNO',
+      idObra: null,
+      codigo: '',
+      nombre: '',
+      activo: true,
+    };
     this.modalOpen = true;
   }
 
@@ -119,13 +136,19 @@ this.error = e?.message || 'No se pudo cargar.';
         this.error = 'Código es obligatorio.';
         return;
       }
+
       if (this.form.tipo === 'OBRA' && !this.form.idObra) {
         this.error = 'Selecciona una obra.';
         return;
       }
 
       const codigo = this.form.codigo.trim().toUpperCase();
-      const exists = (this.rows || []).some(x => (x.codigo || '').toUpperCase() === codigo && (x.tipo || '').toUpperCase() === (this.form.tipo || '').toUpperCase());
+      const exists = (this.rows || []).some(
+        (x) =>
+          (x.codigo || '').toUpperCase() === codigo &&
+          (x.tipo || '').toUpperCase() === (this.form.tipo || '').toUpperCase()
+      );
+
       if (exists) {
         this.error = 'El código de almacén ya existe.';
         this.notify.error(this.error);
@@ -135,7 +158,7 @@ this.error = e?.message || 'No se pudo cargar.';
       const payload = {
         tipo: this.form.tipo,
         idObra: this.form.tipo === 'OBRA' ? this.form.idObra : null,
-        codigo: codigo,
+        codigo,
         nombre: this.form.nombre.trim(),
       };
 
@@ -150,6 +173,7 @@ this.error = e?.message || 'No se pudo cargar.';
           this.notify.error(this.error);
         },
       });
+
       return;
     }
 
@@ -170,13 +194,15 @@ this.error = e?.message || 'No se pudo cargar.';
       },
     });
   }
+
   private forceRender() {
     try {
       this.cdr.detectChanges();
       setTimeout(() => {
-        try { this.cdr.detectChanges(); } catch {}
+        try {
+          this.cdr.detectChanges();
+        } catch {}
       }, 0);
     } catch {}
   }
-
 }

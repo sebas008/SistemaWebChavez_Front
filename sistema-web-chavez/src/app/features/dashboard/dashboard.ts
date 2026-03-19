@@ -1,114 +1,77 @@
-import {Component, OnInit, ChangeDetectorRef} from '@angular/core';
-import { catchError, finalize, of } from 'rxjs';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api';
-import { AuthService } from '../../core/services/auth';
 
-type Kpis = {
-  proveedores: number;
-  almacenes: number;
-  usuarios: number;
-  requerimientos: number;
-  compras: number;
-  atenciones: number;
+type DashboardKpisResponse = {
+  porcentajeEntregaCompleta?: number;
+  porcentajeEntregaATiempo?: number;
+  porcentajeCompra?: number;
+  porcentajeAlmacenInterno?: number;
+  PorcentajeEntregaCompleta?: number;
+  PorcentajeEntregaATiempo?: number;
+  PorcentajeCompra?: number;
+  PorcentajeAlmacenInterno?: number;
+};
+
+type IndicadoresRequerimientos = {
+  entregaCompleta: number;
+  entregaATiempo: number;
+  compra: number;
+  almacenInterno: number;
 };
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
+  styleUrl: './dashboard.scss'
 })
 export class Dashboard implements OnInit {
   loading = false;
   error: string | null = null;
+  indicadores: IndicadoresRequerimientos = { entregaCompleta: 0, entregaATiempo: 0, compra: 0, almacenInterno: 0 };
 
-  kpis: Kpis = {
-    proveedores: 0,
-    almacenes: 0,
-    usuarios: 0,
-    requerimientos: 0,
-    compras: 0,
-    atenciones: 0,
-  };
+  constructor(private cdr: ChangeDetectorRef, private api: ApiService) {}
 
-  constructor(private cdr: ChangeDetectorRef,private api: ApiService, private auth: AuthService) {}
+  ngOnInit(): void { this.load(); }
 
-  ngOnInit(): void {
-    this.load();
-  }
-
-
-  get isMaster(): boolean {
-    return this.auth.hasRole('MASTER');
-  }
-  get isLogistica(): boolean {
-    return this.auth.hasRole('LOGISTICA');
-  }
-
-  canSeeProveedores(): boolean {
-    return this.isMaster;
-  }
-  canSeeAlmacenes(): boolean {
-    return this.isMaster;
-  }
-  canSeeUsuarios(): boolean {
-    return this.isMaster;
-  }
-  canSeeCompras(): boolean {
-    return this.isMaster || this.isLogistica;
-  }
-  canSeeLogisticaInterna(): boolean {
-    return this.isMaster || this.isLogistica;
-  }
-  canSeeRequerimientos(): boolean {
-    return true;
+  load(): void {
+    this.loading = true;
+    this.error = null;
+    this.api.get<DashboardKpisResponse>('/dashboard/kpis').subscribe({
+      next: (d) => {
+        this.indicadores = {
+          entregaCompleta: this.toNumber(d?.porcentajeEntregaCompleta ?? d?.PorcentajeEntregaCompleta),
+          entregaATiempo: this.toNumber(d?.porcentajeEntregaATiempo ?? d?.PorcentajeEntregaATiempo),
+          compra: this.toNumber(d?.porcentajeCompra ?? d?.PorcentajeCompra),
+          almacenInterno: this.toNumber(d?.porcentajeAlmacenInterno ?? d?.PorcentajeAlmacenInterno)
+        };
+        this.loading = false;
+        this.forceRender();
+      },
+      error: (e) => {
+        this.loading = false;
+        this.error = e?.message || 'No se pudo cargar el dashboard.';
+        this.forceRender();
+      }
+    });
   }
 
-load() {
-  this.loading = true;
-  this.error = null;
+  formatPercent(value: number | null | undefined): string {
+    const n = this.toNumber(value);
+    return `${n.toFixed(2)}%`;
+  }
 
-  // Prefer /dashboard/kpis, fallback to /dashboard/resumen
-  this.api.get<Kpis>('/dashboard/kpis').pipe(
-    catchError(() => this.api.get<Kpis>('/dashboard/resumen')),
-    catchError(() => of({
-      proveedores: 0,
-      almacenes: 0,
-      usuarios: 0,
-      requerimientos: 0,
-      compras: 0,
-      atenciones: 0,
-    } as Kpis)),
-    finalize(() => {
-      this.loading = false;
-      this.forceRender();
-    })
-  ).subscribe({
-    next: (d) => {
-      this.kpis = {
-        proveedores: (d as any)?.proveedores ?? (d as any)?.Proveedores ?? 0,
-        almacenes: (d as any)?.almacenes ?? (d as any)?.Almacenes ?? 0,
-        usuarios: (d as any)?.usuarios ?? (d as any)?.Usuarios ?? 0,
-        requerimientos: (d as any)?.requerimientos ?? (d as any)?.Requerimientos ?? 0,
-        compras: (d as any)?.compras ?? (d as any)?.Compras ?? 0,
-        atenciones: (d as any)?.atenciones ?? (d as any)?.Atenciones ?? 0,
-      };
-    },
-    error: (e) => {
-      this.error = e?.message || 'No se pudo cargar el dashboard.';
-    },
-  });
-}
-  private forceRender() {
+  private toNumber(value: unknown): number {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  private forceRender(): void {
     try {
       this.cdr.detectChanges();
-      setTimeout(() => {
-        try { this.cdr.detectChanges(); } catch {}
-      }, 0);
+      setTimeout(() => { try { this.cdr.detectChanges(); } catch {} }, 0);
     } catch {}
   }
-
 }

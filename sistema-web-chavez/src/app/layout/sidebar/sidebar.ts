@@ -19,7 +19,6 @@ export class Sidebar {
     this.navigate.emit();
   }
 
-  // ---- Roles segun Figma ----
   get isMaster(): boolean {
     return this.auth.hasRole('MASTER');
   }
@@ -32,11 +31,31 @@ export class Sidebar {
     return this.auth.hasRole('OBRAS');
   }
 
+  get isOficinaTecnica(): boolean {
+    return this.auth.hasRole('OFICINA_TECNICA');
+  }
+
   canSeeProveedores(): boolean {
     return this.isMaster;
   }
 
   canSeeAlmacenes(): boolean {
+    return this.isMaster;
+  }
+
+  canSeeObras(): boolean {
+    return this.isMaster;
+  }
+
+  canSeeUnidadesMedida(): boolean {
+    return this.isMaster;
+  }
+
+  canSeeMateriales(): boolean {
+    return this.isMaster || this.isOficinaTecnica;
+  }
+
+  canSeePartidas(): boolean {
     return this.isMaster;
   }
 
@@ -53,6 +72,6 @@ export class Sidebar {
   }
 
   canSeeRequerimientos(): boolean {
-    return true; // Todos
+    return true;
   }
 }

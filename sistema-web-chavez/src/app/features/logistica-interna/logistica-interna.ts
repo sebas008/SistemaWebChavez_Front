@@ -1,249 +1,71 @@
-import {Component, OnInit, ChangeDetectorRef} from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api';
 import { NotifyService } from '../../core/services/notify';
-import { AuthService } from '../../core/services/auth';
 
-interface ObraDto {
-  idObra: number;
-  nombre: string;
-}
-interface AlmacenDto {
-  idAlmacen: number;
-  tipo: string;
-  idObra?: number | null;
-  codigo: string;
-  nombre: string;
-  activo: boolean;
-}
-interface ItemDto {
-  idItem: number;
-  descripcion: string;
-}
-
-interface AtencionDetalleDto {
-  idItem: number;
+interface AtencionBandejaDto {
+  idRequerimientoDetalle: number;
+  nroReq: string;
+  nomObra: string;
+  item: string;
   cantidad: number;
-  observacion?: string | null;
-}
-
-interface AtencionDto {
-  idAtencion: number;
-  codigo: string;
-  fecha: string;
-  idObra: number;
-  idAlmacenOrigen: number;
-  idAlmacenDestino: number;
-  metodoAtencion: string;
+  fecha?: string | null;
   estado: string;
-  observacion?: string | null;
-  detalle: AtencionDetalleDto[];
 }
 
 @Component({
   selector: 'app-logistica-interna',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './logistica-interna.html',
   styleUrl: './logistica-interna.scss',
 })
 export class LogisticaInterna implements OnInit {
-  rows: AtencionDto[] = [];
-  obras: ObraDto[] = [];
-  almacenes: AlmacenDto[] = [];
-  items: ItemDto[] = [];
-
+  rows: AtencionBandejaDto[] = [];
   loading = false;
   error: string | null = null;
-
-  modalOpen = false;
   estadoOpen = false;
-  estadoTarget: AtencionDto | null = null;
+  estadoTarget: AtencionBandejaDto | null = null;
   nuevoEstado = '';
-
-  readonly estados = ['GENERADA','ENTREGADA','ANULADA'];
-
-  form = {
-    idObra: null as number | null,
-    idAlmacenOrigen: null as number | null,
-    idAlmacenDestino: null as number | null,
-    metodoAtencion: 'DIRECTO',
-    observacion: '',
-    detalle: [{ idItem: 0, cantidad: 1, observacion: '' }] as Array<{ idItem: number; cantidad: number; observacion?: string }>,
-  };
-
-  constructor(private cdr: ChangeDetectorRef,private api: ApiService, private notify: NotifyService, private auth: AuthService) {}
-
-  ngOnInit(): void {
-    this.loadLookups();
-    this.load();
-  }
-
-
-  private loadLookups() {
-    this.api.get<ObraDto[]>('/maestros/obras', { soloActivas: true }).subscribe({
-      next: (d) => (this.obras = d || []),
-      error: () => (this.obras = []),
-    });
-    this.api.get<AlmacenDto[]>('/inventario/almacenes', { soloActivos: true }).subscribe({
-      next: (d) => (this.almacenes = d || []),
-      error: () => (this.almacenes = []),
-    });
-    this.api.get<ItemDto[]>('/inventario/items', { soloActivos: true }).subscribe({
-      next: (d) => (this.items = d || []),
-      error: () => (this.items = []),
-    });
-  }
-
-  obraNombre(id: number): string {
-    return this.obras.find((o) => o.idObra === id)?.nombre || `Obra #${id}`;
-  }
-  almNombre(id: number): string {
-    const a = this.almacenes.find((x) => x.idAlmacen === id);
-    return a ? `${a.nombre}` : `Almacén #${id}`;
-  }
-
-  get almacenesInternos(): AlmacenDto[] {
-    return (this.almacenes || []).filter((a) => (a.tipo || '').toUpperCase() === 'INTERNO');
-  }
-  get almacenesObra(): AlmacenDto[] {
-    return (this.almacenes || []).filter((a) => (a.tipo || '').toUpperCase() === 'OBRA');
-  }
+  entregaATiempo: boolean | null = null;
+  readonly estados = ['COMPRADO', 'ENTREGADO'];
+  constructor(private cdr: ChangeDetectorRef, private api: ApiService, private notify: NotifyService) {}
+  ngOnInit(): void { this.load(); }
 
   load() {
     this.loading = true;
     this.error = null;
-    this.api.get<AtencionDto[]>('/logistica/atenciones').subscribe({
-      next: (d) => {
-        this.rows = d || [];
-        this.loading = false;
-              this.forceRender();
-},
-      error: (e) => {
-        this.loading = false;
-                this.forceRender();
-this.error = e?.message || 'No se pudo cargar.';
-        this.notify.error(this.error);
-      },
+    this.api.get<AtencionBandejaDto[]>('/logistica/atenciones-bandeja').subscribe({
+      next: d => { this.rows = d || []; this.loading = false; this.render(); },
+      error: e => { this.loading = false; this.error = e?.message || 'No se pudo cargar.'; this.notify.error(this.error); this.render(); }
     });
   }
 
-  openNew() {
-    this.form = {
-      idObra: this.obras[0]?.idObra ?? null,
-      idAlmacenOrigen: this.almacenesInternos[0]?.idAlmacen ?? null,
-      idAlmacenDestino: this.almacenesObra[0]?.idAlmacen ?? null,
-      metodoAtencion: 'DIRECTO',
-      observacion: '',
-      detalle: [{ idItem: this.items[0]?.idItem ?? 0, cantidad: 1, observacion: '' }],
-    };
-    this.modalOpen = true;
+  formatearFecha(fecha: string | null | undefined): string {
+    if (!fecha) return '-';
+    const v = String(fecha).trim();
+    if (v.startsWith('0001-01-01') || v.startsWith('0000-00-00')) return '-';
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric' });
   }
 
-  closeModal() {
-    this.modalOpen = false;
-    setTimeout(() => this.forceRender(), 0);
-  }
-
-  addRow() {
-    this.form.detalle.push({ idItem: this.items[0]?.idItem ?? 0, cantidad: 1, observacion: '' });
-  }
-
-  removeRow(i: number) {
-    this.form.detalle.splice(i, 1);
-    if (this.form.detalle.length === 0) this.addRow();
-  }
-
-
-  openCambiarEstado(row: AtencionDto) {
-    this.estadoTarget = row;
-    this.nuevoEstado = row.estado;
-    this.estadoOpen = true;
-  }
-
-  closeEstado() {
-    this.estadoOpen = false;
-    this.estadoTarget = null;
-    this.nuevoEstado = '';
-    setTimeout(() => this.forceRender(), 0);
-  }
+  openCambiarEstado(r: AtencionBandejaDto) { this.estadoTarget = r; this.nuevoEstado = r.estado || 'COMPRADO'; this.entregaATiempo = null; this.estadoOpen = true; }
+  closeEstado() { this.estadoOpen = false; this.estadoTarget = null; this.nuevoEstado = ''; this.entregaATiempo = null; this.render(); }
 
   guardarEstado() {
     if (!this.estadoTarget) return;
     const estado = (this.nuevoEstado || '').trim().toUpperCase();
-    if (!estado) {
-      this.notify.error('Selecciona un estado.');
-      return;
-    }
-    this.api.put<any>(`/logistica/atenciones/${this.estadoTarget.idAtencion}/estado`, { estado }).subscribe({
-      next: () => {
-        this.notify.success('Estado actualizado.');
-        this.closeEstado();
-        this.load();
-      },
-      error: (e) => {
-        const msg = e?.message || 'No se pudo cambiar estado.';
-        this.notify.error(msg);
-      },
+    if (!estado) { this.notify.error('Selecciona un estado.'); return; }
+    if (estado === 'ENTREGADO' && this.entregaATiempo === null) { this.notify.error('Indica si fue a tiempo.'); return; }
+
+    this.api.put(`/logistica/requerimientos/detalle/${this.estadoTarget.idRequerimientoDetalle}/estado`, {
+      estado, entregaATiempo: estado === 'ENTREGADO' ? this.entregaATiempo : null
+    }).subscribe({
+      next: () => { this.notify.success('Estado actualizado.'); this.closeEstado(); this.load(); },
+      error: e => this.notify.error(e?.message || 'No se pudo cambiar estado.')
     });
   }
 
-  save() {
-    this.error = null;
-    if (!this.form.idObra) {
-      this.error = 'Selecciona una obra.';
-      return;
-    }
-    if (!this.form.idAlmacenOrigen) {
-      this.error = 'Selecciona almacén origen (interno).';
-      return;
-    }
-    if (!this.form.idAlmacenDestino) {
-      this.error = 'Selecciona almacén destino (obra).';
-      return;
-    }
-    const det = (this.form.detalle || [])
-      .filter((x) => !!x.idItem && Number(x.cantidad) > 0)
-      .map((x) => ({
-        idItem: Number(x.idItem),
-        cantidad: Number(x.cantidad),
-        observacion: x.observacion?.trim() || null,
-      }));
-    if (det.length === 0) {
-      this.error = 'Agrega al menos 1 ítem.';
-      return;
-    }
-
-    const payload = {
-      idObra: Number(this.form.idObra),
-      idAlmacenOrigen: Number(this.form.idAlmacenOrigen),
-      idAlmacenDestino: Number(this.form.idAlmacenDestino),
-      metodoAtencion: (this.form.metodoAtencion || 'DIRECTO').toUpperCase(),
-      observacion: this.form.observacion?.trim() || null,
-      detalle: det,
-      idUsuario: this.auth.getSession()?.usuario?.idUsuario ?? null,
-    };
-
-    this.api.post<any>('/logistica/atenciones/desde-almacen-interno', payload).subscribe({
-      next: () => {
-        this.notify.success('Atención registrada.');
-        this.closeModal();
-        this.load();
-      },
-      error: (e) => {
-        this.error = e?.message || 'No se pudo guardar.';
-        this.notify.error(this.error);
-      },
-    });
-  }
-  private forceRender() {
-    try {
-      this.cdr.detectChanges();
-      setTimeout(() => {
-        try { this.cdr.detectChanges(); } catch {}
-      }, 0);
-    } catch {}
-  }
-
+  private render() { try { this.cdr.detectChanges(); } catch {} }
 }

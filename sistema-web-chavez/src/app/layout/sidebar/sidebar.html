@@ -9,12 +9,24 @@
 <nav class="menu">
   <a routerLink="/dashboard" routerLinkActive="active" (click)="onNavigate()">Dashboard</a>
 
-  <div class="section" *ngIf="canSeeProveedores() || canSeeAlmacenes()">Maestros</div>
+  <div class="section" *ngIf="canSeeProveedores() || canSeeAlmacenes() || canSeeObras() || canSeeUnidadesMedida() || canSeeMateriales() || canSeePartidas()">Maestros</div>
   <a *ngIf="canSeeProveedores()" routerLink="/proveedores" routerLinkActive="active" (click)="onNavigate()">
     Proveedores
   </a>
   <a *ngIf="canSeeAlmacenes()" routerLink="/almacenes" routerLinkActive="active" (click)="onNavigate()">
     Almacenes
+  </a>
+  <a *ngIf="canSeeObras()" routerLink="/obras" routerLinkActive="active" (click)="onNavigate()">
+    Obras
+  </a>
+  <a *ngIf="canSeeUnidadesMedida()" routerLink="/unidades-medida" routerLinkActive="active" (click)="onNavigate()">
+    Unidades de medida
+  </a>
+  <a *ngIf="canSeeMateriales()" routerLink="/materiales" routerLinkActive="active" (click)="onNavigate()">
+    Materiales
+  </a>
+  <a *ngIf="canSeePartidas()" routerLink="/partidas" routerLinkActive="active" (click)="onNavigate()">
+    Partidas
   </a>
 
   <div class="section" *ngIf="canSeeUsuarios()">Seguridad</div>
@@ -25,7 +37,7 @@
   <div class="section">Logística</div>
   <a routerLink="/requerimientos" routerLinkActive="active" (click)="onNavigate()">Requerimientos</a>
   <a *ngIf="canSeeCompras()" routerLink="/compras" routerLinkActive="active" (click)="onNavigate()">Compras</a>
-  <a *ngIf="canSeeLogisticaInterna()" routerLink="/logistica-interna" routerLinkActive="active" (click)="onNavigate()">
-    Logística interna
+  <a *ngIf="canSeeLogisticaInterna()" routerLink="/almacen-interno" routerLinkActive="active" (click)="onNavigate()">
+    Almacén interno
   </a>
 </nav>

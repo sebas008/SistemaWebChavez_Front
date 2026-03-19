@@ -4,7 +4,7 @@
   </div>
   <div class="actions">
     <button class="btn" (click)="load()">Actualizar</button>
-    <button class="btn primary" (click)="openNew()">Nuevo</button>
+    <button class="btn primary" *ngIf="canCrearRequerimiento()" (click)="openNew()">Nuevo</button>
   </div>
 </div>
 
@@ -12,44 +12,48 @@
   <div class="error" *ngIf="error">{{ error }}</div>
   <div class="muted" *ngIf="loading">Cargando…</div>
   <div class="table-wrap">
-  <table *ngIf="!loading">
-    <thead>
-      <tr>
-        <th>Código</th>
-        <th>Obra</th>
-        <th>Fecha</th>
-        <th>Estado</th>
-        <th>Obs.</th>
-        <th style="width:140px;"></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let r of rows">
-        <td><b>{{ r.codigo }}</b></td>
-        <td>{{ obraNombre(r.idObra) }}</td>
-        <td>{{ r.fechaSolicitud | date : 'yyyy-MM-dd' }}</td>
-        <td><span class="pill">{{ r.estado }}</span></td>
-        <td class="muted">{{ r.observacion || '-' }}</td>
-        <td class="right"><button class="btn sm" (click)="openCambiarEstado(r)">Cambiar estado</button></td>
-      </tr>
-      <tr *ngIf="rows.length === 0">
-        <td colspan="6" class="muted">Sin registros.</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+    <table *ngIf="!loading">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Obra</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th>Obs.</th>
+          <th style="width:170px;">Destino</th>
+          <th style="width:260px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of rows">
+          <td><b>{{ r.codigo }}</b></td>
+          <td>{{ obraNombre(r.idObra) }}</td>
+          <td>{{ formatearFecha(r.fechaSolicitud) }}</td>
+          <td><span class="pill">{{ r.estado }}</span></td>
+          <td class="muted">{{ r.observacion || '-' }}</td>
+          <td class="muted">{{ (r.detalle?.length ? destinoLabel(r.detalle[0].destino) : '-') }}</td>
+          <td class="right">
+            <button class="btn sm" *ngIf="canGestionarDestinos()" (click)="openDestino(r)">Definir por ítem</button>
+            <button class="btn sm" *ngIf="canCambiarEstado()" (click)="openCambiarEstado(r)">Cambiar estado</button>
+          </td>
+        </tr>
+        <tr *ngIf="rows.length === 0">
+          <td colspan="7" class="muted">Sin registros.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
-<!-- Modal: Nuevo Requerimiento -->
 <div class="modal" *ngIf="modalOpen">
   <div class="modal-backdrop" (click)="closeModal()"></div>
-  <div class="modal-card">
+  <div class="modal-card requerimiento-modal-card">
     <div class="modal-head">
       <div class="title">Nuevo requerimiento</div>
       <button class="icon" (click)="closeModal()">✕</button>
     </div>
 
-    <div class="grid">
+    <div class="grid form-header-grid">
       <label>
         Obra
         <select [(ngModel)]="form.idObra">
@@ -68,35 +72,53 @@
       <button class="btn" (click)="addRow()">+ Ítem</button>
     </div>
 
-    <div class="table-wrap">
-    <table class="mini-table">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th style="width: 140px;">Cantidad</th>
-          <th>Obs.</th>
-          <th style="width: 120px;"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let d of form.detalle; let i = index">
-          <td>
-            <select [(ngModel)]="d.idItem">
-              <option *ngFor="let it of items" [ngValue]="it.idItem">{{ it.descripcion }}</option>
-            </select>
-          </td>
-          <td>
-            <input type="number" min="0" step="0.01" [(ngModel)]="d.cantidad" />
-          </td>
-          <td>
-            <input [(ngModel)]="d.observacion" placeholder="Opcional" />
-          </td>
-          <td class="right">
-            <button class="link" (click)="removeRow(i)">Quitar</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-wrap requerimiento-detail-wrap">
+      <table class="mini-table requerimiento-detail-table">
+        <thead>
+          <tr>
+            <th>Partida</th>
+            <th>Material</th>
+            <th style="width: 140px;">Cantidad</th>
+            <th style="width: 180px;">Unidad</th>
+            <th>Comentario</th>
+            <th style="width: 120px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of form.detalle; let i = index">
+            <td>
+              <select [(ngModel)]="d.idPartida">
+                <option [ngValue]="null">Seleccione</option>
+                <option *ngFor="let partida of partidas" [ngValue]="partida.idPartida">{{ partida.nombre }}</option>
+              </select>
+            </td>
+            <td>
+              <select [(ngModel)]="d.idItem" (ngModelChange)="onItemChange(d)">
+                <option *ngFor="let it of items" [ngValue]="it.idItem">{{ it.descripcion }}</option>
+              </select>
+            </td>
+            <td>
+              <input type="number" min="0" step="0.01" [(ngModel)]="d.cantidad" />
+            </td>
+            <td>
+              <select [(ngModel)]="d.idUnidadMedida">
+                <option [ngValue]="null">Seleccione</option>
+                <option *ngFor="let unidad of unidades" [ngValue]="unidad.idUnidadMedida">{{ unidad.nombre }}</option>
+              </select>
+            </td>
+            <td>
+              <input [(ngModel)]="d.comentario" placeholder="Comentario" />
+            </td>
+            <td class="right">
+              <button class="link" (click)="removeRow(i)">Quitar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-note muted">
+      Partida y Unidad ahora salen de mantenimiento. Si agregas nuevas partidas o unidades, aparecen aquí automáticamente.
     </div>
 
     <div class="modal-actions">
@@ -107,7 +129,47 @@
 </div>
 
 
-<!-- Modal: Cambiar Estado -->
+<div class="modal" *ngIf="destinoOpen">
+  <div class="modal-backdrop" (click)="closeDestino()"></div>
+  <div class="modal-card requerimiento-modal-card">
+    <div class="modal-head">
+      <div class="title">Definir destino por ítem</div>
+      <button class="icon" (click)="closeDestino()">✕</button>
+    </div>
+
+    <div class="muted" *ngIf="destinoTarget"><b>{{ destinoTarget.codigo }}</b> - {{ obraNombre(destinoTarget.idObra) }}</div>
+
+    <div class="table-wrap requerimiento-detail-wrap">
+      <table class="mini-table requerimiento-detail-table">
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th style="width: 120px;">Cantidad</th>
+            <th style="width: 200px;">Destino</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of destinoRows">
+            <td>{{ itemNombre(d.idItem) }}</td>
+            <td>{{ d.cantidad }}</td>
+            <td>
+              <select [(ngModel)]="d.destino">
+                <option [ngValue]="null">-- Seleccionar --</option>
+                <option *ngFor="let destino of destinos" [ngValue]="destino">{{ destinoLabel(destino) }}</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" (click)="closeDestino()">Cancelar</button>
+      <button class="btn primary" (click)="guardarDestinos()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" *ngIf="estadoOpen">
   <div class="modal-backdrop" (click)="closeEstado()"></div>
   <div class="modal-card">
