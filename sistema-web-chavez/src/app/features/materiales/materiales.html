@@ -30,8 +30,20 @@
   <div class="modal-card">
     <div class="modal-head"><div class="title">{{ editing ? 'Editar material' : 'Nuevo material' }}</div><button class="icon" (click)="closeModal()">✕</button></div>
     <div class="grid">
-      <label>Partida<input [(ngModel)]="form.partida" /></label>
-      <label>Unidad de medida<select [(ngModel)]="form.idUnidadMedida"><option [ngValue]="null">-- Seleccionar --</option><option *ngFor="let u of unidades" [ngValue]="u.idUnidadMedida">{{ u.codigo }} - {{ u.nombre }}</option></select></label>
+      <label>
+        Partida
+        <select [(ngModel)]="form.partida">
+          <option [ngValue]="''">Seleccione</option>
+          <option *ngFor="let p of partidas" [ngValue]="p.nombre">{{ p.nombre }}</option>
+        </select>
+      </label>
+      <label>
+        Unidad de medida
+        <select [(ngModel)]="form.idUnidadMedida">
+          <option [ngValue]="null">-- Seleccionar --</option>
+          <option *ngFor="let u of unidades" [ngValue]="u.idUnidadMedida">{{ u.codigo }} - {{ u.nombre }}</option>
+        </select>
+      </label>
       <label class="span2">Descripción<input [(ngModel)]="form.descripcion" /></label>
       <label class="span2" *ngIf="editing">Activo<select [(ngModel)]="form.activo"><option [ngValue]="true">Sí</option><option [ngValue]="false">No</option></select></label>
     </div>

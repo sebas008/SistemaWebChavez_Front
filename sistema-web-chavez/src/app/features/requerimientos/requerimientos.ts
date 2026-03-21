@@ -52,6 +52,7 @@ interface RequerimientoDto {
   fechaSolicitud: string;
   estado: string;
   observacion?: string | null;
+  entregaATiempo?: boolean | null;
   detalle: RequerimientoDetalleDto[];
 }
 
@@ -84,6 +85,7 @@ export class Requerimientos implements OnInit {
   estadoOpen = false;
   estadoTarget: RequerimientoDto | null = null;
   nuevoEstado = '';
+  entregaATiempo: boolean | null = null;
 
   destinoOpen = false;
   destinoTarget: RequerimientoDto | null = null;
@@ -110,33 +112,13 @@ export class Requerimientos implements OnInit {
     this.load();
   }
 
-  get isMaster(): boolean {
-    return this.auth.hasRole('MASTER');
-  }
-
-  get isLogistica(): boolean {
-    return this.auth.hasRole('LOGISTICA');
-  }
-
-  get isOficinaTecnica(): boolean {
-    return this.auth.hasRole('OFICINA_TECNICA');
-  }
-
-  get isObras(): boolean {
-    return this.auth.hasRole('OBRAS');
-  }
-
-  canCrearRequerimiento(): boolean {
-    return this.isMaster || this.isObras || this.isOficinaTecnica;
-  }
-
-  canGestionarDestinos(): boolean {
-    return this.isMaster || this.isLogistica;
-  }
-
-  canCambiarEstado(): boolean {
-    return this.isMaster || this.isObras || this.isOficinaTecnica;
-  }
+  get isMaster(): boolean { return this.auth.hasRole('MASTER'); }
+  get isLogistica(): boolean { return this.auth.hasRole('LOGISTICA'); }
+  get isOficinaTecnica(): boolean { return this.auth.hasRole('OFICINA_TECNICA'); }
+  get isObras(): boolean { return this.auth.hasRole('OBRAS'); }
+  canCrearRequerimiento(): boolean { return this.isMaster || this.isObras || this.isOficinaTecnica; }
+  canGestionarDestinos(): boolean { return this.isMaster || this.isLogistica; }
+  canCambiarEstado(): boolean { return this.isMaster || this.isObras || this.isOficinaTecnica; }
 
   private newDetalle(): RequerimientoDetalleForm {
     return {
@@ -146,6 +128,10 @@ export class Requerimientos implements OnInit {
       idUnidadMedida: this.items[0]?.idUnidadMedida ?? this.unidades[0]?.idUnidadMedida ?? null,
       comentario: '',
     };
+  }
+
+  itemDescripcion(idItem: number): string {
+    return this.items.find(x => x.idItem === idItem)?.descripcion || ('Item #' + idItem);
   }
 
   private loadLookups() {
@@ -167,7 +153,7 @@ export class Requerimientos implements OnInit {
 
     this.api.get<UnidadMedidaDto[]>('/maestros/unidades-medida').subscribe({
       next: (d) => {
-        this.unidades = (d || []).filter((x) => x.activo !== false);
+        this.unidades = d || [];
         this.ensureDetalle();
       },
       error: () => {
@@ -195,11 +181,7 @@ export class Requerimientos implements OnInit {
   }
 
   obraNombre(idObra: number): string {
-    return this.obras.find((o) => o.idObra === idObra)?.nombre || `Obra #${idObra}`;
-  }
-
-  itemNombre(idItem: number): string {
-    return this.items.find((x) => x.idItem === idItem)?.descripcion || `Item #${idItem}`;
+    return this.obras.find((x) => x.idObra === idObra)?.nombre || `Obra #${idObra}`;
   }
 
   destinoLabel(destino?: string | null): string {
@@ -207,13 +189,10 @@ export class Requerimientos implements OnInit {
     return destino === 'ALMACEN_INTERNO' ? 'Almacén interno' : 'Compra';
   }
 
-  formatearFecha(fecha: string | null | undefined): string {
+  formatearFecha(fecha?: string | null): string {
     if (!fecha) return '-';
-    const valor = String(fecha).trim();
-    if (valor.startsWith('0001-01-01') || valor.startsWith('0000-00-00')) return '-';
-    const d = new Date(valor);
-    if (isNaN(d.getTime())) return '-';
-    return d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const d = new Date(fecha);
+    return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('es-PE');
   }
 
   load() {
@@ -227,16 +206,16 @@ export class Requerimientos implements OnInit {
       },
       error: (e) => {
         this.loading = false;
-        this.forceRender();
         this.error = e?.message || 'No se pudo cargar.';
         this.notify.error(this.error);
+        this.forceRender();
       },
     });
   }
 
   openNew() {
     if (!this.canCrearRequerimiento()) {
-      this.notify.error('Logística no puede crear requerimientos.');
+      this.notify.error('No tienes permiso para crear requerimientos.');
       return;
     }
 
@@ -245,6 +224,7 @@ export class Requerimientos implements OnInit {
       observacion: '',
       detalle: [this.newDetalle()],
     };
+
     this.modalOpen = true;
   }
 
@@ -253,32 +233,65 @@ export class Requerimientos implements OnInit {
     setTimeout(() => this.forceRender(), 0);
   }
 
-  addRow() {
-    this.form.detalle.push(this.newDetalle());
-  }
+  addRow() { this.form.detalle.push(this.newDetalle()); }
 
   removeRow(idx: number) {
     this.form.detalle.splice(idx, 1);
     if (this.form.detalle.length === 0) this.addRow();
   }
 
-  onItemChange(detalle: RequerimientoDetalleForm) {
-    const item = this.items.find((x) => x.idItem === Number(detalle.idItem));
-    if (!item) return;
+  onItemChange(d: RequerimientoDetalleForm) {
+    const item = this.items.find((x) => x.idItem === Number(d.idItem));
+    if (item?.idUnidadMedida) d.idUnidadMedida = item.idUnidadMedida;
+  }
 
-    if (item.idUnidadMedida) {
-      detalle.idUnidadMedida = item.idUnidadMedida;
+  save() {
+    this.error = null;
+    if (!this.form.idObra) {
+      this.error = 'Selecciona una obra.';
+      return;
     }
 
-    if (!detalle.idPartida && item.partida) {
-      const match = this.partidas.find((p) => p.nombre.trim().toLowerCase() === item.partida?.trim().toLowerCase());
-      if (match) detalle.idPartida = match.idPartida;
+    const detalle = (this.form.detalle || [])
+      .filter((x) => !!x.idItem && Number(x.cantidad) > 0)
+      .map((x) => ({
+        idItem: Number(x.idItem),
+        idPartida: x.idPartida ? Number(x.idPartida) : null,
+        idUnidadMedida: x.idUnidadMedida ? Number(x.idUnidadMedida) : null,
+        cantidad: Number(x.cantidad),
+        comentario: x.comentario?.trim() || null,
+        observacion: null,
+      }));
+
+    if (!detalle.length) {
+      this.error = 'Agrega al menos un ítem válido.';
+      return;
     }
+
+    const payload = {
+      idObra: Number(this.form.idObra),
+      observacion: this.form.observacion?.trim() || null,
+      detalle,
+      idUsuario: this.auth.getSession()?.usuario?.idUsuario ?? null,
+    };
+
+    this.api.post<any>('/logistica/requerimientos', payload).subscribe({
+      next: () => {
+        this.notify.success('Requerimiento guardado.');
+        this.closeModal();
+        this.load();
+      },
+      error: (e) => {
+        this.error = e?.message || 'No se pudo guardar.';
+        this.notify.error(this.error);
+      },
+    });
   }
 
   openCambiarEstado(row: RequerimientoDto) {
     this.estadoTarget = row;
-    this.nuevoEstado = row.estado;
+    this.nuevoEstado = row.estado || 'PENDIENTE';
+    this.entregaATiempo = row.entregaATiempo ?? null;
     this.estadoOpen = true;
   }
 
@@ -286,26 +299,29 @@ export class Requerimientos implements OnInit {
     this.estadoOpen = false;
     this.estadoTarget = null;
     this.nuevoEstado = '';
+    this.entregaATiempo = null;
     setTimeout(() => this.forceRender(), 0);
   }
 
   guardarEstado() {
     if (!this.estadoTarget) return;
-    const estado = (this.nuevoEstado || '').trim().toUpperCase();
-    if (!estado) {
-      this.notify.error('Selecciona un estado.');
-      return;
+
+    const payload: any = {
+      estado: this.nuevoEstado,
+      idUsuario: this.auth.getSession()?.usuario?.idUsuario ?? null,
+    };
+
+    if (this.nuevoEstado === 'ATENDIDO') {
+      payload.entregaATiempo = this.entregaATiempo;
     }
-    this.api.put<any>(`/logistica/requerimientos/${this.estadoTarget.idRequerimiento}/estado`, { estado }).subscribe({
+
+    this.api.put<any>(`/logistica/requerimientos/${this.estadoTarget.idRequerimiento}/estado`, payload).subscribe({
       next: () => {
         this.notify.success('Estado actualizado.');
         this.closeEstado();
         this.load();
       },
-      error: (e) => {
-        const msg = e?.message || 'No se pudo cambiar estado.';
-        this.notify.error(msg);
-      },
+      error: (e) => this.notify.error(e?.message || 'No se pudo actualizar estado.'),
     });
   }
 
@@ -313,6 +329,7 @@ export class Requerimientos implements OnInit {
     this.destinoTarget = row;
     this.destinoRows = [];
     this.destinoOpen = true;
+
     this.api.get<RequerimientoDto>(`/logistica/requerimientos/${row.idRequerimiento}`).subscribe({
       next: (resp) => {
         this.destinoRows = resp?.detalle || [];
@@ -333,9 +350,9 @@ export class Requerimientos implements OnInit {
   }
 
   async guardarDestinos() {
-    const pendientes = (this.destinoRows || []).filter((x) => !!x.idRequerimientoDetalle);
-    if (!pendientes.length) {
-      this.closeDestino();
+    const pendientes = (this.destinoRows || []).filter((x) => !!x.idRequerimientoDetalle && !!x.destino);
+    if (!pendientes.length || !this.destinoTarget) {
+      this.notify.error('Selecciona al menos un destino.');
       return;
     }
 
@@ -350,6 +367,14 @@ export class Requerimientos implements OnInit {
           )
         )
       );
+
+      await firstValueFrom(
+        this.api.put<any>(`/logistica/requerimientos/${this.destinoTarget.idRequerimiento}/estado`, {
+          estado: 'DERIVADO',
+          idUsuario: this.auth.getSession()?.usuario?.idUsuario ?? null,
+        })
+      );
+
       this.notify.success('Destinos actualizados.');
       this.closeDestino();
       this.load();
@@ -358,61 +383,11 @@ export class Requerimientos implements OnInit {
     }
   }
 
-  save() {
-    this.error = null;
-    if (!this.canCrearRequerimiento()) {
-      this.notify.error('Logística no puede crear requerimientos.');
-      return;
-    }
-
-    if (!this.form.idObra) {
-      this.error = 'Selecciona una obra.';
-      return;
-    }
-
-    const det = (this.form.detalle || [])
-      .filter((x) => !!x.idItem && !!x.idPartida && !!x.idUnidadMedida && Number(x.cantidad) > 0)
-      .map((x) => ({
-        idItem: Number(x.idItem),
-        idPartida: Number(x.idPartida),
-        idUnidadMedida: Number(x.idUnidadMedida),
-        cantidad: Number(x.cantidad),
-        comentario: x.comentario?.trim() || null,
-        observacion: null,
-      }));
-
-    if (det.length === 0) {
-      this.error = 'Agrega al menos 1 ítem con partida, material, cantidad y unidad.';
-      return;
-    }
-
-    const payload = {
-      idObra: Number(this.form.idObra),
-      observacion: this.form.observacion?.trim() || null,
-      detalle: det,
-      idUsuario: this.auth.getSession()?.usuario?.idUsuario ?? null,
-    };
-
-    this.api.post<any>('/logistica/requerimientos', payload).subscribe({
-      next: () => {
-        this.notify.success('Requerimiento creado.');
-        this.closeModal();
-        this.load();
-      },
-      error: (e) => {
-        this.error = e?.message || 'No se pudo guardar.';
-        this.notify.error(this.error);
-      },
-    });
-  }
-
   private forceRender() {
     try {
       this.cdr.detectChanges();
       setTimeout(() => {
-        try {
-          this.cdr.detectChanges();
-        } catch {}
+        try { this.cdr.detectChanges(); } catch {}
       }, 0);
     } catch {}
   }

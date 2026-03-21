@@ -117,17 +117,12 @@
       </table>
     </div>
 
-    <div class="form-note muted">
-      Partida y Unidad ahora salen de mantenimiento. Si agregas nuevas partidas o unidades, aparecen aquí automáticamente.
-    </div>
-
     <div class="modal-actions">
       <button class="btn" (click)="closeModal()">Cancelar</button>
       <button class="btn primary" (click)="save()">Guardar</button>
     </div>
   </div>
 </div>
-
 
 <div class="modal" *ngIf="destinoOpen">
   <div class="modal-backdrop" (click)="closeDestino()"></div>
@@ -137,24 +132,26 @@
       <button class="icon" (click)="closeDestino()">✕</button>
     </div>
 
-    <div class="muted" *ngIf="destinoTarget"><b>{{ destinoTarget.codigo }}</b> - {{ obraNombre(destinoTarget.idObra) }}</div>
+    <div class="muted" *ngIf="destinoTarget">
+      <b>{{ destinoTarget.codigo }}</b> - {{ obraNombre(destinoTarget.idObra) }}
+    </div>
 
     <div class="table-wrap requerimiento-detail-wrap">
       <table class="mini-table requerimiento-detail-table">
         <thead>
           <tr>
             <th>Material</th>
-            <th style="width: 120px;">Cantidad</th>
-            <th style="width: 200px;">Destino</th>
+            <th>Cantidad</th>
+            <th>Destino</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let d of destinoRows">
-            <td>{{ itemNombre(d.idItem) }}</td>
+            <td>{{ itemDescripcion(d.idItem) }}</td>
             <td>{{ d.cantidad }}</td>
             <td>
               <select [(ngModel)]="d.destino">
-                <option [ngValue]="null">-- Seleccionar --</option>
+                <option [ngValue]="null">Seleccione</option>
                 <option *ngFor="let destino of destinos" [ngValue]="destino">{{ destinoLabel(destino) }}</option>
               </select>
             </td>
@@ -180,15 +177,18 @@
 
     <div class="grid">
       <label class="span2">
-        Requerimiento
-        <div><b>{{ estadoTarget?.codigo }}</b></div>
-        <div class="muted">Estado actual: {{ estadoTarget?.estado }}</div>
-      </label>
-
-      <label class="span2">
-        Nuevo estado
+        Estado
         <select [(ngModel)]="nuevoEstado">
           <option *ngFor="let e of estados" [ngValue]="e">{{ e }}</option>
+        </select>
+      </label>
+
+      <label class="span2" *ngIf="nuevoEstado === 'ATENDIDO'">
+        ¿Entrega a tiempo?
+        <select [(ngModel)]="entregaATiempo">
+          <option [ngValue]="null">Seleccione</option>
+          <option [ngValue]="true">Sí</option>
+          <option [ngValue]="false">No</option>
         </select>
       </label>
     </div>

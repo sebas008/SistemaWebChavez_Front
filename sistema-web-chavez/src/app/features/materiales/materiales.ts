@@ -12,10 +12,13 @@ interface ItemDto {
   idUnidadMedida?: number | null;
   activo: boolean;
 }
-
 interface UnidadMedidaDto {
   idUnidadMedida: number;
   codigo: string;
+  nombre: string;
+}
+interface PartidaDto {
+  idPartida: number;
   nombre: string;
 }
 
@@ -29,6 +32,7 @@ interface UnidadMedidaDto {
 export class Materiales implements OnInit {
   rows: ItemDto[] = [];
   unidades: UnidadMedidaDto[] = [];
+  partidas: PartidaDto[] = [];
   loading = false;
   error: string | null = null;
   modalOpen = false;
@@ -43,7 +47,11 @@ export class Materiales implements OnInit {
 
   ngOnInit(): void { this.loadAll(); }
 
-  loadAll() { this.loadUnidades(); this.load(); }
+  loadAll() { this.loadPartidas(); this.loadUnidades(); this.load(); }
+
+  loadPartidas() {
+    this.api.get<PartidaDto[]>('/maestros/partidas').subscribe({ next: d => this.partidas = d || [], error: () => this.partidas = [] });
+  }
 
   loadUnidades() {
     this.api.get<UnidadMedidaDto[]>('/maestros/unidades-medida').subscribe({ next: d => this.unidades = d || [], error: () => this.unidades = [] });
@@ -64,25 +72,40 @@ export class Materiales implements OnInit {
     });
   }
 
-  openNew() { this.editing = null; this.form = { partida: '', descripcion: '', idUnidadMedida: null, activo: true }; this.modalOpen = true; }
+  openNew() {
+    this.editing = null;
+    this.form = { partida: '', descripcion: '', idUnidadMedida: null, activo: true };
+    this.modalOpen = true;
+  }
 
-  openEdit(row: ItemDto) { this.editing = row; this.form = { partida: row.partida || '', descripcion: row.descripcion, idUnidadMedida: row.idUnidadMedida ?? null, activo: row.activo }; this.modalOpen = true; }
+  openEdit(row: ItemDto) {
+    this.editing = row;
+    this.form = { partida: row.partida || '', descripcion: row.descripcion, idUnidadMedida: row.idUnidadMedida ?? null, activo: row.activo };
+    this.modalOpen = true;
+  }
 
   closeModal() { this.modalOpen = false; this.editing = null; setTimeout(() => this.forceRender(), 0); }
 
   save() {
     this.error = null;
+    if (!this.form.partida.trim()) { this.error = 'Partida es obligatoria.'; return; }
     if (!this.form.descripcion.trim()) { this.error = 'Descripción es obligatoria.'; return; }
+
+    const payloadBase = {
+      partida: this.form.partida.trim(),
+      descripcion: this.form.descripcion.trim(),
+      idUnidadMedida: this.form.idUnidadMedida
+    };
+
     if (!this.editing) {
-      const payload = { partida: this.form.partida.trim() || null, descripcion: this.form.descripcion.trim(), idUnidadMedida: this.form.idUnidadMedida };
-      this.api.post<any>('/inventario/items', payload).subscribe({
+      this.api.post<any>('/inventario/items', payloadBase).subscribe({
         next: () => { this.notify.success('Material guardado.'); this.closeModal(); this.load(); },
         error: (e) => { this.error = e?.message || 'No se pudo guardar.'; this.notify.error(this.error); },
       });
       return;
     }
-    const payload = { partida: this.form.partida.trim() || null, descripcion: this.form.descripcion.trim(), idUnidadMedida: this.form.idUnidadMedida, activo: !!this.form.activo };
-    this.api.put<any>(`/inventario/items/${this.editing.idItem}`, payload).subscribe({
+
+    this.api.put<any>(`/inventario/items/${this.editing.idItem}`, { ...payloadBase, activo: !!this.form.activo }).subscribe({
       next: () => { this.notify.success('Material actualizado.'); this.closeModal(); this.load(); },
       error: (e) => { this.error = e?.message || 'No se pudo actualizar.'; this.notify.error(this.error); },
     });

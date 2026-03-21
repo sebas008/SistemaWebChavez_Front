@@ -1,21 +1,2 @@
-<div class="dashboard-page">
-  <div class="page-head">
-    <h2>Dashboard</h2>
-    <div class="actions">
-      <button class="btn" (click)="load()">Actualizar</button>
-    </div>
-  </div>
-
-  <section class="dashboard-card">
-    <h3 class="section-title">Indicadores de requerimientos</h3>
-    <div class="error" *ngIf="error">{{ error }}</div>
-    <div class="muted" *ngIf="loading">Cargando...</div>
-
-    <div class="kpi-grid" *ngIf="!loading">
-      <article class="kpi-card"><div class="kpi-value">{{ formatPercent(indicadores.entregaCompleta) }}</div><div class="kpi-label">ENTREGA COMPLETA</div></article>
-      <article class="kpi-card"><div class="kpi-value">{{ formatPercent(indicadores.entregaATiempo) }}</div><div class="kpi-label">ENTREGA A TIEMPO</div></article>
-      <article class="kpi-card"><div class="kpi-value">{{ formatPercent(indicadores.compra) }}</div><div class="kpi-label">COMPRA</div></article>
-      <article class="kpi-card"><div class="kpi-value">{{ formatPercent(indicadores.almacenInterno) }}</div><div class="kpi-label">ALMACÉN INTERNO</div></article>
-    </div>
-  </section>
-</div>
+<div class="page-head"><div><h2>Dashboard</h2></div><div class="actions"><button class="btn" (click)="load()">Actualizar</button></div></div>
+<div class="card"><div class="error" *ngIf="error">{{error}}</div><div class="muted" *ngIf="loading">Cargando...</div><div class="grid cards" *ngIf="!loading"><div class="kpi-card"><div class="kpi-value">{{indicadores.entregaCompleta | number:'1.2-2'}}%</div><div class="kpi-label">Entrega completa</div></div><div class="kpi-card"><div class="kpi-value">{{indicadores.entregaATiempo | number:'1.2-2'}}%</div><div class="kpi-label">Entrega a tiempo</div></div><div class="kpi-card"><div class="kpi-value">{{indicadores.compra | number:'1.2-2'}}%</div><div class="kpi-label">Compra</div></div><div class="kpi-card"><div class="kpi-value">{{indicadores.almacenInterno | number:'1.2-2'}}%</div><div class="kpi-label">Almacén interno</div></div></div></div>

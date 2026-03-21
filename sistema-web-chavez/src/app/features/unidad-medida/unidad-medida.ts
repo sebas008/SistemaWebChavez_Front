@@ -39,14 +39,13 @@ export class UnidadMedida implements OnInit {
   }
 
   openNew() { this.editing = null; this.form = { codigo: '', nombre: '' }; this.modalOpen = true; }
-
   openEdit(row: UnidadMedidaDto) { this.editing = row; this.form = { codigo: row.codigo, nombre: row.nombre }; this.modalOpen = true; }
-
   closeModal() { this.modalOpen = false; this.editing = null; setTimeout(() => this.forceRender(), 0); }
 
   save() {
     this.error = null;
     if (!this.form.nombre.trim()) { this.error = 'Nombre es obligatorio.'; return; }
+
     if (!this.editing) {
       if (!this.form.codigo.trim()) { this.error = 'Código es obligatorio.'; return; }
       const payload = { codigo: this.form.codigo.trim().toUpperCase(), nombre: this.form.nombre.trim() };
@@ -56,6 +55,7 @@ export class UnidadMedida implements OnInit {
       });
       return;
     }
+
     const payload = { nombre: this.form.nombre.trim() };
     this.api.put<any>(`/maestros/unidades-medida/${this.editing.idUnidadMedida}`, payload).subscribe({
       next: () => { this.notify.success('Unidad de medida actualizada.'); this.closeModal(); this.load(); },

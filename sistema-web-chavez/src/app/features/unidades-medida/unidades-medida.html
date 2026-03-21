@@ -1,5 +1,5 @@
 <div class="page-head">
-  <div><h2>Obras</h2></div>
+  <div><h2>Unidades de medida</h2></div>
   <div class="actions">
     <button class="btn" (click)="load()">Actualizar</button>
     <button class="btn primary" (click)="openNew()">Nuevo</button>
@@ -23,9 +23,7 @@
         <tr *ngFor="let r of rows">
           <td class="strong">{{ r.codigo }}</td>
           <td>{{ r.nombre }}</td>
-          <td>
-            <span class="pill" [class.off]="!isActive(r)">{{ isActive(r) ? 'Activa' : 'Inactiva' }}</span>
-          </td>
+          <td><span class="pill" [class.off]="!r.activo">{{ r.activo ? 'Activa' : 'Inactiva' }}</span></td>
           <td class="right"><button class="link" (click)="openEdit(r)">Editar</button></td>
         </tr>
         <tr *ngIf="rows.length === 0"><td colspan="4" class="muted">Sin registros.</td></tr>
@@ -38,30 +36,23 @@
   <div class="modal-backdrop" (click)="closeModal()"></div>
   <div class="modal-card">
     <div class="modal-head">
-      <div class="title">{{ editing ? 'Editar obra' : 'Nueva obra' }}</div>
+      <div class="title">{{ editing ? 'Editar unidad de medida' : 'Nueva unidad de medida' }}</div>
       <button class="icon" (click)="closeModal()">✕</button>
     </div>
-
     <div class="grid">
       <label>
         Código
-        <input [(ngModel)]="form.codigo" placeholder="Código de la obra" />
+        <input [(ngModel)]="form.codigo" />
       </label>
-
-      <label>
+      <label class="span2">
         Nombre
-        <input [(ngModel)]="form.nombre" placeholder="Nombre de la obra" />
+        <input [(ngModel)]="form.nombre" />
       </label>
-
       <label class="span2" *ngIf="editing">
+        <input type="checkbox" [(ngModel)]="form.activo" />
         Activa
-        <select [(ngModel)]="form.activa">
-          <option [ngValue]="true">Sí</option>
-          <option [ngValue]="false">No</option>
-        </select>
       </label>
     </div>
-
     <div class="modal-actions">
       <button class="btn" (click)="closeModal()">Cancelar</button>
       <button class="btn primary" (click)="save()">Guardar</button>

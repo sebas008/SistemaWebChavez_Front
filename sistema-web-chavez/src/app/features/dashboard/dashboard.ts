@@ -2,76 +2,12 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../core/services/api';
 
-type DashboardKpisResponse = {
-  porcentajeEntregaCompleta?: number;
-  porcentajeEntregaATiempo?: number;
-  porcentajeCompra?: number;
-  porcentajeAlmacenInterno?: number;
-  PorcentajeEntregaCompleta?: number;
-  PorcentajeEntregaATiempo?: number;
-  PorcentajeCompra?: number;
-  PorcentajeAlmacenInterno?: number;
-};
+type Indicadores = { entregaCompleta:number; entregaATiempo:number; compra:number; almacenInterno:number; };
 
-type IndicadoresRequerimientos = {
-  entregaCompleta: number;
-  entregaATiempo: number;
-  compra: number;
-  almacenInterno: number;
-};
-
-@Component({
-  selector: 'app-dashboard',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss'
-})
+@Component({ selector:'app-dashboard', standalone:true, imports:[CommonModule], templateUrl:'./dashboard.html', styleUrl:'./dashboard.scss' })
 export class Dashboard implements OnInit {
-  loading = false;
-  error: string | null = null;
-  indicadores: IndicadoresRequerimientos = { entregaCompleta: 0, entregaATiempo: 0, compra: 0, almacenInterno: 0 };
-
-  constructor(private cdr: ChangeDetectorRef, private api: ApiService) {}
-
-  ngOnInit(): void { this.load(); }
-
-  load(): void {
-    this.loading = true;
-    this.error = null;
-    this.api.get<DashboardKpisResponse>('/dashboard/kpis').subscribe({
-      next: (d) => {
-        this.indicadores = {
-          entregaCompleta: this.toNumber(d?.porcentajeEntregaCompleta ?? d?.PorcentajeEntregaCompleta),
-          entregaATiempo: this.toNumber(d?.porcentajeEntregaATiempo ?? d?.PorcentajeEntregaATiempo),
-          compra: this.toNumber(d?.porcentajeCompra ?? d?.PorcentajeCompra),
-          almacenInterno: this.toNumber(d?.porcentajeAlmacenInterno ?? d?.PorcentajeAlmacenInterno)
-        };
-        this.loading = false;
-        this.forceRender();
-      },
-      error: (e) => {
-        this.loading = false;
-        this.error = e?.message || 'No se pudo cargar el dashboard.';
-        this.forceRender();
-      }
-    });
-  }
-
-  formatPercent(value: number | null | undefined): string {
-    const n = this.toNumber(value);
-    return `${n.toFixed(2)}%`;
-  }
-
-  private toNumber(value: unknown): number {
-    const n = Number(value);
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  private forceRender(): void {
-    try {
-      this.cdr.detectChanges();
-      setTimeout(() => { try { this.cdr.detectChanges(); } catch {} }, 0);
-    } catch {}
-  }
+  loading=false; error:string|null=null; indicadores:Indicadores={entregaCompleta:0,entregaATiempo:0,compra:0,almacenInterno:0};
+  constructor(private cdr:ChangeDetectorRef, private api:ApiService){}
+  ngOnInit(){ this.load(); }
+  load(){ this.loading=true; this.error=null; this.api.get<any>('/dashboard/indicadores-requerimientos').subscribe({next:d=>{this.indicadores={entregaCompleta:Number(d?.entregaCompleta ?? d?.EntregaCompleta ?? 0),entregaATiempo:Number(d?.entregaATiempo ?? d?.EntregaATiempo ?? 0),compra:Number(d?.compra ?? d?.Compra ?? 0),almacenInterno:Number(d?.almacenInterno ?? d?.AlmacenInterno ?? 0)};this.loading=false;this.r();},error:e=>{this.loading=false;this.error=e?.message||'No se pudo cargar el dashboard.';this.r();}});} private r(){try{this.cdr.detectChanges();}catch{}}
 }
