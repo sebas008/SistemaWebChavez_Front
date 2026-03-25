@@ -30,6 +30,28 @@
   width: 100%;
 }
 
+.obs-textarea{
+  width:100%;
+  min-height:112px;
+  resize:vertical;
+  padding:14px 16px;
+  border:1px solid #d8d2cb;
+  border-radius:14px;
+  background:#fff;
+  color:#2a2a2a;
+  font: inherit;
+  line-height:1.45;
+  outline:none;
+  transition:border-color .2s ease, box-shadow .2s ease;
+}
+.obs-textarea::placeholder{
+  color:#8a8178;
+}
+.obs-textarea:focus{
+  border-color:#a46b43;
+  box-shadow:0 0 0 3px rgba(164,107,67,.12);
+}
+
 .form-note {
   margin-top: 10px;
   font-size: 12px;

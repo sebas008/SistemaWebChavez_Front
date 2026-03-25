@@ -183,6 +183,11 @@
         </select>
       </label>
 
+      <label class="span2" *ngIf="nuevoEstado === 'OBSERVADO'">
+        <span>Observaciones</span>
+        <textarea class="obs-textarea" [(ngModel)]="estadoObservacion" rows="4" placeholder="Ingresar observación"></textarea>
+      </label>
+
       <label class="span2" *ngIf="nuevoEstado === 'ATENDIDO'">
         ¿Entrega a tiempo?
         <select [(ngModel)]="entregaATiempo">

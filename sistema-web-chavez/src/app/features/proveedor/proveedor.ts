@@ -4,7 +4,6 @@ import { NgFor, NgIf } from '@angular/common';
 import { ApiService } from '../../core/services/api';
 import { NotifyService } from '../../core/services/notify';
 import { OnlyDigitsDirective } from '../../shared/directives/only-digits.directive';
-import { OnlyLettersDirective } from '../../shared/directives/only-letters.directive';
 
 interface ProveedorDto {
   idProveedor: number;
@@ -18,7 +17,7 @@ interface ProveedorDto {
 @Component({
   selector: 'app-proveedor',
   standalone: true,
-  imports: [FormsModule, NgFor, NgIf, OnlyDigitsDirective, OnlyLettersDirective],
+  imports: [FormsModule, NgFor, NgIf, OnlyDigitsDirective],
   templateUrl: './proveedor.html',
   styleUrl: './proveedor.scss',
 })
@@ -26,7 +25,6 @@ export class Proveedor implements OnInit {
   rows: ProveedorDto[] = [];
   loading = false;
   error: string | null = null;
-
   modalOpen = false;
   editing: ProveedorDto | null = null;
 
@@ -38,12 +36,15 @@ export class Proveedor implements OnInit {
     activo: true,
   };
 
-  constructor(private cdr: ChangeDetectorRef,private api: ApiService, private notify: NotifyService) {}
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private api: ApiService,
+    private notify: NotifyService
+  ) {}
 
   ngOnInit(): void {
     this.load();
   }
-
 
   load() {
     this.loading = true;
@@ -52,12 +53,12 @@ export class Proveedor implements OnInit {
       next: (data) => {
         this.rows = data || [];
         this.loading = false;
-              this.forceRender();
-},
+        this.forceRender();
+      },
       error: (e) => {
         this.loading = false;
-                this.forceRender();
-this.error = e?.message || 'No se pudo cargar.';
+        this.error = e?.message || 'No se pudo cargar.';
+        this.forceRender();
       },
     });
   }
@@ -72,7 +73,7 @@ this.error = e?.message || 'No se pudo cargar.';
     this.editing = row;
     this.form = {
       ruc: row.ruc || '',
-      razonSocial: row.razonSocial,
+      razonSocial: row.razonSocial || '',
       email: row.email || '',
       telefono: row.telefono || '',
       activo: row.activo,
@@ -86,59 +87,60 @@ this.error = e?.message || 'No se pudo cargar.';
     setTimeout(() => this.forceRender(), 0);
   }
 
-private onlyDigits(v: string | null | undefined): string {
-  return (v ?? '').toString().replace(/\D+/g, '');
-}
+  private onlyDigits(v: string | null | undefined): string {
+    return (v ?? '').toString().replace(/\D+/g, '');
+  }
 
-onRucInput(ev: Event) {
-  const el = ev.target as HTMLInputElement;
-  const clean = this.onlyDigits(el.value).slice(0, 11);
-  el.value = clean;
-  this.form.ruc = clean;
-}
+  onRucInput(ev: Event) {
+    const el = ev.target as HTMLInputElement;
+    const clean = this.onlyDigits(el.value).slice(0, 11);
+    el.value = clean;
+    this.form.ruc = clean;
+  }
 
-onTelefonoInput(ev: Event) {
-  const el = ev.target as HTMLInputElement;
-  const clean = this.onlyDigits(el.value).slice(0, 15);
-  el.value = clean;
-  this.form.telefono = clean;
-}
+  onTelefonoInput(ev: Event) {
+    const el = ev.target as HTMLInputElement;
+    const clean = this.onlyDigits(el.value).slice(0, 15);
+    el.value = clean;
+    this.form.telefono = clean;
+  }
 
-private isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
+  onRazonSocialInput(ev: Event) {
+    const el = ev.target as HTMLInputElement;
+    this.form.razonSocial = el.value;
+  }
 
+  private isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
 
   save() {
     this.error = null;
+
     if (!this.form.razonSocial.trim()) {
-      this.error = 'Razón social es obligatoria.';
+      this.error = 'Razón social / nombre comercial es obligatoria.';
       return;
     }
 
+    const rucDigits = this.onlyDigits(this.form.ruc || '');
+    if (this.form.ruc && rucDigits.length !== 11) {
+      this.error = 'El RUC debe tener 11 dígitos.';
+      return;
+    }
+    this.form.ruc = rucDigits;
 
-// Validación RUC: solo números (11 dígitos) si viene informado
-const rucDigits = this.onlyDigits(this.form.ruc || '');
-if (this.form.ruc && rucDigits.length !== 11) {
-  this.error = 'El RUC debe tener 11 dígitos.';
-  return;
-}
-this.form.ruc = rucDigits;
+    const telDigits = this.onlyDigits(this.form.telefono || '');
+    if (this.form.telefono && telDigits.length < 6) {
+      this.error = 'Teléfono inválido.';
+      return;
+    }
+    this.form.telefono = telDigits;
 
-// Validación Teléfono: solo números si viene informado
-const telDigits = this.onlyDigits(this.form.telefono || '');
-if (this.form.telefono && telDigits.length < 6) {
-  this.error = 'Teléfono inválido.';
-  return;
-}
-this.form.telefono = telDigits;
-
-// Validación Email
-const email = (this.form.email || '').trim();
-if (email && !this.isValidEmail(email)) {
-  this.error = 'Email inválido.';
-  return;
-}
+    const email = (this.form.email || '').trim();
+    if (email && !this.isValidEmail(email)) {
+      this.error = 'Email inválido.';
+      return;
+    }
 
     if (!this.editing) {
       const payload = {
@@ -181,6 +183,7 @@ if (email && !this.isValidEmail(email)) {
       },
     });
   }
+
   private forceRender() {
     try {
       this.cdr.detectChanges();
@@ -189,5 +192,4 @@ if (email && !this.isValidEmail(email)) {
       }, 0);
     } catch {}
   }
-
 }

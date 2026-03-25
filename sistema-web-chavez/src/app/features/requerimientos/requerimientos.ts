@@ -6,63 +6,13 @@ import { ApiService } from '../../core/services/api';
 import { NotifyService } from '../../core/services/notify';
 import { AuthService } from '../../core/services/auth';
 
-interface ObraDto {
-  idObra: number;
-  codigo: string;
-  nombre: string;
-  activa: boolean;
-}
-
-interface PartidaDto {
-  idPartida: number;
-  nombre: string;
-  activo: boolean;
-}
-
-interface UnidadMedidaDto {
-  idUnidadMedida: number;
-  codigo: string;
-  nombre: string;
-  activo: boolean;
-}
-
-interface ItemDto {
-  idItem: number;
-  descripcion: string;
-  partida?: string | null;
-  idUnidadMedida?: number | null;
-  activo: boolean;
-}
-
-interface RequerimientoDetalleDto {
-  idRequerimientoDetalle?: number | null;
-  idItem: number;
-  idPartida?: number | null;
-  idUnidadMedida?: number | null;
-  cantidad: number;
-  comentario?: string | null;
-  observacion?: string | null;
-  destino?: string | null;
-}
-
-interface RequerimientoDto {
-  idRequerimiento: number;
-  codigo: string;
-  idObra: number;
-  fechaSolicitud: string;
-  estado: string;
-  observacion?: string | null;
-  entregaATiempo?: boolean | null;
-  detalle: RequerimientoDetalleDto[];
-}
-
-interface RequerimientoDetalleForm {
-  idPartida: number | null;
-  idItem: number;
-  cantidad: number;
-  idUnidadMedida: number | null;
-  comentario: string;
-}
+interface ObraDto { idObra: number; codigo: string; nombre: string; activa: boolean; }
+interface PartidaDto { idPartida: number; nombre: string; activo: boolean; }
+interface UnidadMedidaDto { idUnidadMedida: number; codigo: string; nombre: string; activo: boolean; }
+interface ItemDto { idItem: number; descripcion: string; partida?: string | null; idUnidadMedida?: number | null; activo: boolean; }
+interface RequerimientoDetalleDto { idRequerimientoDetalle?: number | null; idItem: number; idPartida?: number | null; idUnidadMedida?: number | null; cantidad: number; comentario?: string | null; observacion?: string | null; destino?: string | null; }
+interface RequerimientoDto { idRequerimiento: number; codigo: string; idObra: number; fechaSolicitud: string; estado: string; observacion?: string | null; entregaATiempo?: boolean | null; detalle: RequerimientoDetalleDto[]; }
+interface RequerimientoDetalleForm { idPartida: number | null; idItem: number; cantidad: number; idUnidadMedida: number | null; comentario: string; }
 
 @Component({
   selector: 'app-requerimientos',
@@ -77,21 +27,18 @@ export class Requerimientos implements OnInit {
   partidas: PartidaDto[] = [];
   unidades: UnidadMedidaDto[] = [];
   items: ItemDto[] = [];
-
   loading = false;
   error: string | null = null;
-
   modalOpen = false;
   estadoOpen = false;
   estadoTarget: RequerimientoDto | null = null;
   nuevoEstado = '';
+  estadoObservacion = '';
   entregaATiempo: boolean | null = null;
-
   destinoOpen = false;
   destinoTarget: RequerimientoDto | null = null;
   destinoRows: RequerimientoDetalleDto[] = [];
-
-  readonly estados = ['PENDIENTE', 'APROBADO', 'ATENDIDO', 'ANULADO'];
+  readonly estados = ['PENDIENTE', 'APROBADO', 'OBSERVADO', 'ATENDIDO', 'ANULADO'];
   readonly destinos = ['COMPRA', 'ALMACEN_INTERNO'];
 
   form = {
@@ -100,12 +47,7 @@ export class Requerimientos implements OnInit {
     detalle: [] as RequerimientoDetalleForm[],
   };
 
-  constructor(
-    private cdr: ChangeDetectorRef,
-    private api: ApiService,
-    private notify: NotifyService,
-    private auth: AuthService
-  ) {}
+  constructor(private cdr: ChangeDetectorRef, private api: ApiService, private notify: NotifyService, private auth: AuthService) {}
 
   ngOnInit(): void {
     this.loadLookups();
@@ -117,7 +59,7 @@ export class Requerimientos implements OnInit {
   get isOficinaTecnica(): boolean { return this.auth.hasRole('OFICINA_TECNICA'); }
   get isObras(): boolean { return this.auth.hasRole('OBRAS'); }
   canCrearRequerimiento(): boolean { return this.isMaster || this.isObras || this.isOficinaTecnica; }
-  canGestionarDestinos(): boolean { return this.isMaster || this.isLogistica; }
+  canGestionarDestinos(): boolean { return this.isMaster || this.isLogistica || this.isOficinaTecnica; }
   canCambiarEstado(): boolean { return this.isMaster || this.isObras || this.isOficinaTecnica; }
 
   private newDetalle(): RequerimientoDetalleForm {
@@ -135,49 +77,14 @@ export class Requerimientos implements OnInit {
   }
 
   private loadLookups() {
-    this.api.get<ObraDto[]>('/maestros/obras', { soloActivas: true }).subscribe({
-      next: (d) => (this.obras = d || []),
-      error: () => (this.obras = []),
-    });
-
-    this.api.get<PartidaDto[]>('/maestros/partidas', { soloActivas: true }).subscribe({
-      next: (d) => {
-        this.partidas = d || [];
-        this.ensureDetalle();
-      },
-      error: () => {
-        this.partidas = [];
-        this.ensureDetalle();
-      },
-    });
-
-    this.api.get<UnidadMedidaDto[]>('/maestros/unidades-medida').subscribe({
-      next: (d) => {
-        this.unidades = d || [];
-        this.ensureDetalle();
-      },
-      error: () => {
-        this.unidades = [];
-        this.ensureDetalle();
-      },
-    });
-
-    this.api.get<ItemDto[]>('/inventario/items', { soloActivos: true }).subscribe({
-      next: (d) => {
-        this.items = d || [];
-        this.ensureDetalle();
-      },
-      error: () => {
-        this.items = [];
-        this.ensureDetalle();
-      },
-    });
+    this.api.get<ObraDto[]>('/maestros/obras', { soloActivas: true }).subscribe({ next: d => this.obras = d || [], error: () => this.obras = [] });
+    this.api.get<PartidaDto[]>('/maestros/partidas', { soloActivas: true }).subscribe({ next: d => { this.partidas = d || []; this.ensureDetalle(); }, error: () => { this.partidas = []; this.ensureDetalle(); } });
+    this.api.get<UnidadMedidaDto[]>('/maestros/unidades-medida').subscribe({ next: d => { this.unidades = d || []; this.ensureDetalle(); }, error: () => { this.unidades = []; this.ensureDetalle(); } });
+    this.api.get<ItemDto[]>('/inventario/items', { soloActivos: true }).subscribe({ next: d => { this.items = d || []; this.ensureDetalle(); }, error: () => { this.items = []; this.ensureDetalle(); } });
   }
 
   private ensureDetalle() {
-    if (!this.form.detalle.length) {
-      this.form.detalle = [this.newDetalle()];
-    }
+    if (!this.form.detalle.length) this.form.detalle = [this.newDetalle()];
   }
 
   obraNombre(idObra: number): string {
@@ -199,17 +106,8 @@ export class Requerimientos implements OnInit {
     this.loading = true;
     this.error = null;
     this.api.get<RequerimientoDto[]>('/logistica/requerimientos').subscribe({
-      next: (d) => {
-        this.rows = d || [];
-        this.loading = false;
-        this.forceRender();
-      },
-      error: (e) => {
-        this.loading = false;
-        this.error = e?.message || 'No se pudo cargar.';
-        this.notify.error(this.error);
-        this.forceRender();
-      },
+      next: (d) => { this.rows = d || []; this.loading = false; this.forceRender(); },
+      error: (e) => { this.loading = false; this.error = e?.message || 'No se pudo cargar.'; this.notify.error(this.error); this.forceRender(); },
     });
   }
 
@@ -218,27 +116,13 @@ export class Requerimientos implements OnInit {
       this.notify.error('No tienes permiso para crear requerimientos.');
       return;
     }
-
-    this.form = {
-      idObra: this.obras[0]?.idObra ?? null,
-      observacion: '',
-      detalle: [this.newDetalle()],
-    };
-
+    this.form = { idObra: this.obras[0]?.idObra ?? null, observacion: '', detalle: [this.newDetalle()] };
     this.modalOpen = true;
   }
 
-  closeModal() {
-    this.modalOpen = false;
-    setTimeout(() => this.forceRender(), 0);
-  }
-
+  closeModal() { this.modalOpen = false; setTimeout(() => this.forceRender(), 0); }
   addRow() { this.form.detalle.push(this.newDetalle()); }
-
-  removeRow(idx: number) {
-    this.form.detalle.splice(idx, 1);
-    if (this.form.detalle.length === 0) this.addRow();
-  }
+  removeRow(idx: number) { this.form.detalle.splice(idx, 1); if (this.form.detalle.length === 0) this.addRow(); }
 
   onItemChange(d: RequerimientoDetalleForm) {
     const item = this.items.find((x) => x.idItem === Number(d.idItem));
@@ -247,10 +131,7 @@ export class Requerimientos implements OnInit {
 
   save() {
     this.error = null;
-    if (!this.form.idObra) {
-      this.error = 'Selecciona una obra.';
-      return;
-    }
+    if (!this.form.idObra) { this.error = 'Selecciona una obra.'; return; }
 
     const detalle = (this.form.detalle || [])
       .filter((x) => !!x.idItem && Number(x.cantidad) > 0)
@@ -263,10 +144,7 @@ export class Requerimientos implements OnInit {
         observacion: null,
       }));
 
-    if (!detalle.length) {
-      this.error = 'Agrega al menos un ítem válido.';
-      return;
-    }
+    if (!detalle.length) { this.error = 'Agrega al menos un ítem válido.'; return; }
 
     const payload = {
       idObra: Number(this.form.idObra),
@@ -276,21 +154,15 @@ export class Requerimientos implements OnInit {
     };
 
     this.api.post<any>('/logistica/requerimientos', payload).subscribe({
-      next: () => {
-        this.notify.success('Requerimiento guardado.');
-        this.closeModal();
-        this.load();
-      },
-      error: (e) => {
-        this.error = e?.message || 'No se pudo guardar.';
-        this.notify.error(this.error);
-      },
+      next: () => { this.notify.success('Requerimiento guardado.'); this.closeModal(); this.load(); },
+      error: (e) => { this.error = e?.message || 'No se pudo guardar.'; this.notify.error(this.error); },
     });
   }
 
   openCambiarEstado(row: RequerimientoDto) {
     this.estadoTarget = row;
     this.nuevoEstado = row.estado || 'PENDIENTE';
+    this.estadoObservacion = '';
     this.entregaATiempo = row.entregaATiempo ?? null;
     this.estadoOpen = true;
   }
@@ -299,6 +171,7 @@ export class Requerimientos implements OnInit {
     this.estadoOpen = false;
     this.estadoTarget = null;
     this.nuevoEstado = '';
+    this.estadoObservacion = '';
     this.entregaATiempo = null;
     setTimeout(() => this.forceRender(), 0);
   }
@@ -309,18 +182,13 @@ export class Requerimientos implements OnInit {
     const payload: any = {
       estado: this.nuevoEstado,
       idUsuario: this.auth.getSession()?.usuario?.idUsuario ?? null,
+      observacion: this.nuevoEstado === 'OBSERVADO' ? (this.estadoObservacion?.trim() || null) : null,
     };
 
-    if (this.nuevoEstado === 'ATENDIDO') {
-      payload.entregaATiempo = this.entregaATiempo;
-    }
+    if (this.nuevoEstado === 'ATENDIDO') payload.entregaATiempo = this.entregaATiempo;
 
     this.api.put<any>(`/logistica/requerimientos/${this.estadoTarget.idRequerimiento}/estado`, payload).subscribe({
-      next: () => {
-        this.notify.success('Estado actualizado.');
-        this.closeEstado();
-        this.load();
-      },
+      next: () => { this.notify.success('Estado actualizado.'); this.closeEstado(); this.load(); },
       error: (e) => this.notify.error(e?.message || 'No se pudo actualizar estado.'),
     });
   }
@@ -331,14 +199,8 @@ export class Requerimientos implements OnInit {
     this.destinoOpen = true;
 
     this.api.get<RequerimientoDto>(`/logistica/requerimientos/${row.idRequerimiento}`).subscribe({
-      next: (resp) => {
-        this.destinoRows = resp?.detalle || [];
-        this.forceRender();
-      },
-      error: (e) => {
-        this.notify.error(e?.message || 'No se pudo cargar el detalle.');
-        this.closeDestino();
-      },
+      next: (resp) => { this.destinoRows = resp?.detalle || []; this.forceRender(); },
+      error: (e) => { this.notify.error(e?.message || 'No se pudo cargar el detalle.'); this.closeDestino(); },
     });
   }
 

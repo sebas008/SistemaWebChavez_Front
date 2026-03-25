@@ -27,7 +27,7 @@
       <tbody>
         <tr *ngFor="let r of rows">
           <td>{{ r.ruc || '-' }}</td>
-          <td class="strong">{{ r.razonSocial }}</td>
+          <td>{{ r.razonSocial }}</td>
           <td>{{ r.email || '-' }}</td>
           <td>{{ r.telefono || '-' }}</td>
           <td>
@@ -42,7 +42,6 @@
   </div>
 </div>
 
-<!-- MODAL -->
 <div class="modal" *ngIf="modalOpen">
   <div class="modal-backdrop" (click)="closeModal()"></div>
   <div class="modal-card">
@@ -54,12 +53,12 @@
     <div class="grid">
       <label>
         RUC
-        <input [(ngModel)]="form.ruc" onlyDigits inputmode="numeric" pattern="\d*" maxlength="11" placeholder="RUC (11 dígitos)" />
+        <input [(ngModel)]="form.ruc" onlyDigits inputmode="numeric" pattern="\d*" maxlength="11" placeholder="RUC (11 dígitos)" (input)="onRucInput($event)" />
       </label>
 
       <label class="span2">
         Razón social / Nombre comercial
-        <input [(ngModel)]="form.razonSocial" onlyLetters />
+        <input [(ngModel)]="form.razonSocial" placeholder="Admite letras y números" (input)="onRazonSocialInput($event)" />
       </label>
 
       <label>
@@ -69,7 +68,7 @@
 
       <label>
         Teléfono
-        <input [(ngModel)]="form.telefono" onlyDigits inputmode="tel" pattern="[0-9+\s-]*" placeholder="Teléfono" />
+        <input [(ngModel)]="form.telefono" onlyDigits inputmode="tel" pattern="[0-9+\s-]*" placeholder="Teléfono" (input)="onTelefonoInput($event)" />
       </label>
 
       <label class="span2" *ngIf="editing">
